@@ -5,6 +5,32 @@ var app = app || {};
 	+ now + loc to app.user
 */
 
+
+//--events
+app.events = (function() {
+
+	var publish = function (name, o) {
+       
+        console.log("EVENT [" + name + "]", o);
+        $(document).trigger(name, [o]);
+    
+    };
+
+    var subscribe = function (name, callback) {
+        
+        $(document).on(name, function(event, o){            
+            callback(o);
+        });
+
+    };
+
+    return {
+    	publish : publish,
+    	subscribe : subscribe
+    }; 
+
+})();
+
 //---user info 
 app.user = (function(){
 
@@ -46,6 +72,7 @@ app.user = (function(){
 		name = 'here',
 		type = '';
 	
+	//pull nabe + boro from google api
 	var getNabe = function(p){
 		
 		//get user's lat/lng
@@ -71,13 +98,15 @@ app.user = (function(){
 						hood.unshift(result.results[i].address_components[0].long_name);						
 					}
 					if(result.results[i].types[0] == 'sublocality'){
-						boro = result.results[i].address_components[0].long_name;
+						app.user.boro = result.results[i].address_components[0].long_name;
 					}
 				}
 
-			    nabe = hood[0];
-			    //console.log('nabe: ', nabe);
-				//console.log('boro: ', boro);
+			    app.user.nabe = hood[0];
+			    
+			    var publishLoc = "You are in " + app.user.nabe + ", " + app.user.boro + ".";
+				
+				app.events.publish('location:ready', publishLoc);
 		
 				//call foursquare for loc check in
 				exploreNabe();	
@@ -86,10 +115,11 @@ app.user = (function(){
 
 	};
 	
+	//pull/sort/append venue list from foursquare
 	var exploreNabe = function(){
 		
 		var pos = lat + "," + lng;
-		var url = 'https://api.foursquare.com/v2/venues/search?ll='+ pos+'&client_id=***&client_secret=***&v=20131016';
+		var url = 'https://api.foursquare.com/v2/venues/search?ll='+ pos+'&client_id=***&client_secret=***&v=20131016'
 		
 
 		//preparing functions for venue list jquery resp
@@ -100,11 +130,9 @@ app.user = (function(){
 			finalList = [];
 		
 		var sortVenues = function(){
-
 			finalList.sort(function(a,b) {
 			    return a.text.localeCompare(b.text);
 			});
-			
 			buildVenueList();
 			
 		};
@@ -185,19 +213,22 @@ app.user = (function(){
 	};
 	
 	return {
-		init : init
+		init : init,
+		nabe : nabe,
+		boro : boro,
+		name : name
 	}
 	
 })();
 
-
+//--mongodb controls
 app.database = (function(){
 
 	var response =  '',
 		baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
 
 	//find in db.
-	var find = function(sql, callback, errorcallback){
+	var find = function(query, callback, errorcallback){
 
 		if(!callback){callback = function(){}};
 		if(!errorcallback){errorcallback = function(){}};
@@ -205,7 +236,7 @@ app.database = (function(){
 		$.ajax({
 			type: "GET",
 			dataType: 'json',
-			url: baseurl + 'find/' + sql,
+			url: baseurl + 'find/' + query,
 		}).success(function(data) {
 				response = data;
 				//callback(data);
@@ -216,13 +247,13 @@ app.database = (function(){
 	};
 	
 	//track in db.
-	var track = function(sql, callback, errorcallback){
+	var track = function(query, callback, errorcallback){
 		
 		if(!callback){callback = function(){}};
 		if(!errorcallback){errorcallback = function(){}};
 
 		$.ajax({
-			url: baseurl + 'track/' + sql,
+			url: baseurl + 'track/' + query,
 		}).success(function(data) {
 				response = data;
 				//callback(data);
@@ -232,15 +263,15 @@ app.database = (function(){
 		
 	};
 	
-	var init = function(call, sql, callback, errorcallback){
+	var init = function(call, query, callback, errorcallback){
 	
 		switch(call){
 			case 'find':
-				find(sql, callback, errorcallback);
+				find(query, callback, errorcallback);
 			break;
 			
 			case 'track':
-				track(sql, callback, errorcallback);
+				track(query, callback, errorcallback);
 			break;		
 		};	
 		
@@ -255,4 +286,177 @@ app.database = (function(){
 
 })();
 
+//--nav controls
+app.nav = (function(){
+		
+	//--nav display
+	//build nav bar with user's location
+	var build = function(){
+		$('option#here').text(app.user.name);
+		$('option#nabe').text(app.user.nabe);
+		$('option#boro').text(app.user.boro);
+		readyCheck();	
+	};	
+		
+	//check to see if nav bar was built
+	var readyCheck = function(){
+		var loc = $('select#locationType').find('option:selected').val();
+		var place = $('select#locationType').find('#here').val();
 
+		if(loc !== 'nabe'){
+			if(place !== 'here'){
+				callLog();
+			}
+		}else{
+			setTimeout(readyCheck, 1000);	
+		};	
+	};
+		
+	//category name
+	var category = function(){
+		return $('select#newsType').find('option:selected').attr('id');	
+	};
+	
+	//location name
+	var location = function(){
+		return $('select#locationType').find('option:selected').attr('id');	
+	};
+	
+	//time definition
+	var time = function(){
+		var x = $('select#timeType').find('option:selected').attr('id');
+		var x = parseFloat(x);
+		return x
+	};
+	
+	var time_call = function(){
+		
+		
+	};
+	
+	
+	//--get articles
+	var getArticleList = function(){
+		
+		var date_now = new Date;
+		var date_past = date_now - 1000 * 60 * 60 * 24 * time();
+		date_past = new Date(date_past).toISOString();
+		date_now = date_now.toISOString();
+		
+		var call = '"date" : {$gte: ISODate("' + date_past + '"), $lt: ISODate("' + date_now + '")}';
+		console.log(call);
+	};
+	
+	
+	//--listeners
+	var listeners = function(){
+
+		//--nav:general listeners	
+		app.events.subscribe('location:ready', build);
+
+		//--nav:newstype listeners
+		//if news type changes, call db
+		$('select#newsType').change(function(){ 
+
+			//if user selects 'most recent'
+			if( category() == 'All'){
+				app.events.publish('nav:most_read', 'nav is set to most read');
+			}else{
+				app.events.publish('nav:category', 'nav is set to a category');
+			};
+			
+			app.events.publish('feed:refresh', 'The category was changed.');
+
+		});		
+		app.events.subscribe('nav:most_read', function(){ 
+			$('#locationType').css('display', 'inline');
+			$('#inLabel').css('display', 'inline');
+		});
+		app.events.subscribe('nav:category', function(){ 
+			$('#locationType').css('display', 'none');
+			$('#inLabel').css('display', 'none');
+		});
+		
+		//if location changes, call db
+		$('select#locationType').change(function(){ 
+			app.events.publish('feed:refresh', 'The lcoation was changed.');
+		});
+		
+		//if timerange changes, call db
+		$('select#timeType').change(function(){ 
+			app.events.publish('feed:refresh', 'The time range was changed.');
+		});
+
+		//refresh feed
+		app.events.subscribe('feed:refresh', getArticleList);
+	};
+		
+	//--init
+	var init = function(){
+		listeners();
+	};
+	
+	return {
+		
+		init : init
+		
+	}
+	
+	
+	
+	
+})();
+
+//--newsfeed manager
+app.newsfeed = (function(){
+	
+	
+	
+	
+	var init = function(){
+		
+		
+	};
+	
+	return {
+		
+		init : init
+		
+	}
+	
+})();
+
+
+
+
+// app.events.subscribe('status:update', updateStatus);
+// app.events.publish('status:update', [notes.length, _.where(notes,{liked : true}).length]);
+
+
+
+app.init = (function(){
+	app.user.init();
+	app.nav.init();
+})();
+
+
+
+
+//		ArticleSchema = mongoose.Schema({
+//		    hed: String,
+//		    storyURL: { type: String, unique: true, index: true },
+//		    date: Date,
+//		    img: String,
+//		    keywords: [],
+//		    cat: String,
+//		    body: String   
+//		}),
+
+
+//		UserSchema = mongoose.Schema({
+//		    date: { type: Date, default: Date.now },
+//		    user: { finger: String, geoLat: Number, geoLon: Number, geoNabe: String, geoBoro: String, geoName: String, geoType: String},
+//		    search: { terms: String, resultKeys: [String] },
+//		    dropDown: { term: String, resultKeys: [String] },
+//		    articleClick: { name: String, url: String, keys: [String], tweet: Boolean, instapaper: Boolean, email: Boolean, copy: Boolean, ct: Boolean }  
+//		}),
