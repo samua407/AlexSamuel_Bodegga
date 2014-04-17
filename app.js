@@ -310,6 +310,8 @@ app.nav = (function(){
 		}else{
 			setTimeout(readyCheck, 1000);	
 		};	
+		
+		app.events.publish('nav:ready', 'Navigation is fully loaded.');
 	};
 		
 	//category name
@@ -317,9 +319,53 @@ app.nav = (function(){
 		return $('select#newsType').find('option:selected').attr('id');	
 	};
 	
-	//location name
+	//location definition
 	var location = function(){
 		return $('select#locationType').find('option:selected').attr('id');	
+	};
+	var location_call = function(){
+		
+		var call;
+		
+		
+			switch( location() ) {
+			
+				case 'here':
+					if(category() != "All"){
+						call = '"{user.geoName" : "'+ app.user.name+ '"}, ';
+						console.log(call);
+					}else{
+						call = '';
+					};
+				break;
+			
+				case 'nabe':
+					if(category() != "All"){
+						call =  '"{user.geoNabe" : "'+ app.user.nabe+ '"}, ';
+						console.log(call);
+					}else{
+						call = '';
+					};
+				break;
+				
+				case 'boro':
+					if(category() != "All"){
+						call =  '"{user.geoBoro" : "'+ app.user.boro+ '"},';
+						console.log(call);
+					}else{
+						call = ''
+					};
+				break;
+				
+				case 'city':
+					call = '';
+				break;
+			};
+		
+
+		return call;
+		
+		
 	};
 	
 	//time definition
@@ -328,23 +374,22 @@ app.nav = (function(){
 		var x = parseFloat(x);
 		return x
 	};
-	
 	var time_call = function(){
+		var date_now = new Date;
+		var date_past = date_now - 1000 * 60 * 60 * 24 * time();
+		date_past = new Date(date_past).toISOString();
+		date_now = date_now.toISOString();
 		
+		var call = '{"date" : {$gte: ISODate("' + date_past + '"), $lt: ISODate("' + date_now + '")}}';
+		return call;
 		
 	};
 	
 	
 	//--get articles
 	var getArticleList = function(){
-		
-		var date_now = new Date;
-		var date_past = date_now - 1000 * 60 * 60 * 24 * time();
-		date_past = new Date(date_past).toISOString();
-		date_now = date_now.toISOString();
-		
-		var call = '"date" : {$gte: ISODate("' + date_past + '"), $lt: ISODate("' + date_now + '")}';
-		console.log(call);
+		console.log(time_call());
+		console.log(location_call());
 	};
 	
 	
@@ -354,9 +399,10 @@ app.nav = (function(){
 		//--nav:general listeners	
 		app.events.subscribe('location:ready', build);
 
-		//--nav:newstype listeners
-		//if news type changes, call db
-		$('select#newsType').change(function(){ 
+		app.events.subscribe('nav: ready', function(){
+			//--nav:newstype listeners
+			//if news type changes, call db
+			$('select#newsType').change(function(){ 
 
 			//if user selects 'most recent'
 			if( category() == 'All'){
@@ -368,27 +414,28 @@ app.nav = (function(){
 			app.events.publish('feed:refresh', 'The category was changed.');
 
 		});		
-		app.events.subscribe('nav:most_read', function(){ 
+			app.events.subscribe('nav:most_read', function(){ 
 			$('#locationType').css('display', 'inline');
 			$('#inLabel').css('display', 'inline');
 		});
-		app.events.subscribe('nav:category', function(){ 
+			app.events.subscribe('nav:category', function(){ 
 			$('#locationType').css('display', 'none');
 			$('#inLabel').css('display', 'none');
 		});
-		
-		//if location changes, call db
-		$('select#locationType').change(function(){ 
+			
+			//if location changes, call db
+			$('select#locationType').change(function(){ 
 			app.events.publish('feed:refresh', 'The lcoation was changed.');
 		});
-		
-		//if timerange changes, call db
-		$('select#timeType').change(function(){ 
+			
+			//if timerange changes, call db
+			$('select#timeType').change(function(){ 
 			app.events.publish('feed:refresh', 'The time range was changed.');
 		});
-
-		//refresh feed
-		app.events.subscribe('feed:refresh', getArticleList);
+	
+			//refresh feed
+			app.events.subscribe('feed:refresh', getArticleList);
+		});
 	};
 		
 	//--init
