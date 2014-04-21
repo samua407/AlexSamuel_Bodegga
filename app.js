@@ -208,9 +208,9 @@ app.user = (function(){
 	
 	var init = function(){
 		navigator.geolocation.getCurrentPosition(getNabe);
-		console.log('time: ', time());
-		console.log('date: ', date());
-		console.log('fp: ', fp());
+		//console.log('time: ', time());
+		//console.log('date: ', date());
+		//console.log('fp: ', fp());
 	};
 	
 	return {
@@ -226,8 +226,8 @@ app.user = (function(){
 app.database = (function(){
 
 	var response =  '',
-		baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
-		//baseurl = 'http://localhost:5000/';
+		//baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
+		baseurl = 'http://localhost:5000/';
 
 	//find in article collection
 	var find = function(query, callback, errorcallback){
@@ -235,18 +235,18 @@ app.database = (function(){
 		if(typeof(query) == "object"){
 			query = JSON.stringify(query);
 		};
-		
 
+	
 		$.ajax({
 			type: "GET",
 			dataType: 'json',
 			url: baseurl + 'find/' + query,
 		}).success(function(data) {
 				response = data;
-				//callback(data);
-				console.log('done');
-				console.log(data);
+				callback(data);
+				//console.log(data);
 		});
+
 
 	};
 	
@@ -256,28 +256,43 @@ app.database = (function(){
 		if(typeof(query) == "object"){
 			query = JSON.stringify(query);
 		};
-			
-		console.log('user + ', query);
-
-			
+						
 		$.ajax({
 			type: "GET",
 			dataType: 'json',
 			//url: baseurl + 'user/' + query,
 			url: baseurl + 'user/{"date_start" : "2014-04-10T17:26:36.174Z", "today" : "2014-04-21T17:26:36.175Z", "geoNabe" : "Union Square"}',
 		}).success(function(data) {
-				response = data;
-				//callback(data);
-				console.log('done');
-				console.log(data);
+				callback(data);
+				//console.log('done');
+				//console.log(data);
 		});
 			
 	};
 	
-	//track in user collection.
+	//find content in article colletion for list of urls
+	var list = function(query, callback, errorcallback){
+
+		if(typeof(query) == "object"){
+			query = JSON.stringify(query);
+		};
+
 	
-	/* {"user": {"finger": "asdflkasfd", "geoLat": 40.7229, "geoLon": -73.8424, "geoNabe": "Greenpoint", "geoBoro": "Brooklyn", "geoName": "Home"}, "dropDown": {"term": "New York"}} */
+		$.ajax({
+			type: "GET",
+			dataType: 'json',
+			url: baseurl + 'list/' + query,
+		}).success(function(data) {
+				response = data;
+				callback(data);
+				//console.log(data);
+		});
+
+
+		
+	};
 	
+	//track in user collection.	
 	var track = function(query, callback, errorcallback){
 
 		$.ajax({
@@ -285,7 +300,7 @@ app.database = (function(){
 		}).success(function(data) {
 				response = data;
 				//callback(data);
-				console.log('done');
+				//console.log('done');
 				console.log(data);
 		});
 		
@@ -296,11 +311,16 @@ app.database = (function(){
 		if(!callback){callback = function(){}};
 		if(!errorcallback){errorcallback = function(){}};
 		
+		
 		switch(call){
 			case 'user':
 				user(query, callback, errorcallback);
 			break;
-
+			
+			case 'list':
+				list(query, callback, errorcallback);
+			break;
+			
 			case 'find':
 				find(query, callback, errorcallback);
 			break;
@@ -312,9 +332,8 @@ app.database = (function(){
 		
 	};
 	
-	return {
-		
-		init : init
+	return {		
+		init : init,
 	};
 
 
@@ -334,13 +353,9 @@ app.nav = (function(){
 		
 	//check to see if nav bar was built
 	var readyCheck = function(){
-		console.log('ready check');
 		var loc = $('select#locationType').find('option:selected').val();
 		var place = $('select#locationType').find('#here').val();
 
-		console.log('loc is: ', loc);
-		console.log('place is: ', place);
-		
 		//check to see that user's data loaded into drop downs
 		if(loc != 'nabe'){
 			if(place != 'here'){
@@ -351,8 +366,6 @@ app.nav = (function(){
 		}else{
 			setTimeout(readyCheck, 1000);	
 		};	
-		
-
 	};
 		
 	//category name
@@ -405,7 +418,7 @@ app.nav = (function(){
 		
 	};
 	
-	//time definition
+	//time definitions
 	var time = function(){
 		var x = $('select#timeType').find('option:selected').attr('id');
 		var x = parseFloat(x);
@@ -416,7 +429,6 @@ app.nav = (function(){
 		now = now.toISOString();
 		return now;
 	};
-	
 	var time_start = function(){
 		var date_now = new Date;
 		var date_past = date_now - 1000 * 60 * 60 * 24 * time();
@@ -425,30 +437,77 @@ app.nav = (function(){
 		return date_past;
 		
 	};
-	
 	var time_call = function(){
 				
-		var call = '{$gte: ISODate(\'' + time_start() + '\'), $lt: ISODate(\'' + time_today() + '\')}';
+		//var call = '{$gte: ISODate(\'' + time_start() + '\'), $lt: ISODate(\'' + time_today() + '\')}';
+		var call = '"date_start" : "' + time_start() + '", "today" : "' + time_today() + '"';
 		return call;
 		
 	};
 	
 	
-	//--get articles
+	//--get article list from either user db or article db
 	var getArticleList = function(){
 
 		var call = '';
 		
 		if(category() == 'All'){
-			call = '{"date_start" : "' + time_start() + '", "today" : "' + time_today() + '", ' + location_call() + '}';
-			//console.log(call);
-			app.database.init('user', call);
+			call = '{' + time_call() + ', ' + location_call() + '}';
+			var callback = function(data){	getArticleURLs(data);	};
+			app.database.init('user', call, callback);
 		}else{
-			call = '{ "date" : "' + time_call() + '", "cat" : "' + category() + '"}';
-			//console.log(call);
-			app.database.init('find', call);
+			call = '{' + time_call() + ', "cat" : "' + category() + '"}';
+			var callback = function(data){app.events.publish('nav:content:done', 'The ' + category() + ' Article array is ready.')};
+			app.database.init('find', call, callback);
 		};
 
+	};
+	
+	//--get urls from user return
+	var articleURLs = [];
+	var getArticleURLs = function(data){
+		data = JSON.parse(data);
+		
+		var num_results = data.length;
+		var num_parsed = 0;
+		
+		data.forEach(function(el, arr, index){		
+			var url = el.articleClick.url;		
+			articleURLs.push(url);
+
+			num_parsed ++ ;		
+			if(num_parsed == num_results){
+				app.events.publish('nav:urls:ready', 'All article URLS pulled from user return.');
+			};
+
+		});		
+
+	};
+	
+
+	//--get story content from articleURLs
+	var getArticleContent = function(){
+				
+		var urlList = [];
+		var num_results = articleURLs.length;
+		var num_pushed = 0;
+		var callback = function(data){app.events.publish('nav:content:done', 'The Most Read Article array is ready.')};
+		articleURLs.forEach(function(el, arr, index){
+			
+			
+			el = el.replace(/\//g, '^');
+			var url = {"storyURL" : el};	
+			urlList.push(url);
+			
+			num_pushed ++ ;		
+			if(num_pushed == num_results){
+				urlList = JSON.stringify(urlList);
+				app.database.init('list', urlList, callback);
+			};
+
+		});
+
+		
 	};
 	
 	//--listeners
@@ -456,7 +515,6 @@ app.nav = (function(){
 
 		//--nav:general listeners	
 		app.events.subscribe('location:ready', build);
-
 		app.events.subscribe('nav: ready', function(){
 			
 			//-- set up nav:newstype listeners
@@ -495,6 +553,9 @@ app.nav = (function(){
 	
 			
 		});
+		
+		//--nav articleURL listeners
+		app.events.subscribe('nav:urls:ready', getArticleContent);
 		
 		//refresh feed
 		app.events.subscribe('feed:refresh', getArticleList);
