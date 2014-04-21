@@ -1,0 +1,26 @@
+{
+  "name": "BodeggaUX",
+  "version": "0.0.0",
+  "homepage": "bodeg.ga",
+  "authors": [
+    "Alex Samuel"
+  ],
+  "description": "User interface for Bodegga",
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.0",
+    "underscore": "~1.6.0",
+    "fingerprint": "~0.5.3"
+  }
+}

@@ -1,12 +1,6 @@
 var app = app || {};
 
-/*
-### to-change log
-	+ now + loc to app.user
-*/
-
-
-//--events
+//--events manager
 app.events = (function() {
 
 	var publish = function (name, o) {
@@ -31,7 +25,7 @@ app.events = (function() {
 
 })();
 
-//---user info 
+//---user manager 
 app.user = (function(){
 
 	//get time
@@ -222,7 +216,7 @@ app.user = (function(){
 	
 })();
 
-//--mongodb controls
+//--mongodb manager
 app.database = (function(){
 
 	var response =  '',
@@ -339,9 +333,11 @@ app.database = (function(){
 
 })();
 
-//--nav controls
+//--nav manager
 app.nav = (function(){
-		
+	
+	var feed = [];
+	
 	//--nav display
 	//build nav bar with user's location
 	var build = function(){
@@ -457,7 +453,10 @@ app.nav = (function(){
 			app.database.init('user', call, callback);
 		}else{
 			call = '{' + time_call() + ', "cat" : "' + category() + '"}';
-			var callback = function(data){app.events.publish('nav:content:done', 'The ' + category() + ' Article array is ready.')};
+			var callback = function(data){
+				app.nav.feed = JSON.parse(data);
+				app.events.publish('nav:content:done', 'The ' + category() + ' Article array is ready.');
+			};
 			app.database.init('find', call, callback);
 		};
 
@@ -491,9 +490,11 @@ app.nav = (function(){
 		var urlList = [];
 		var num_results = articleURLs.length;
 		var num_pushed = 0;
-		var callback = function(data){app.events.publish('nav:content:done', 'The Most Read Article array is ready.')};
+		var callback = function(data){
+			app.nav.feed = JSON.parse(data);
+			app.events.publish('nav:content:done', 'The Most Read Article array is ready.')
+		};
 		articleURLs.forEach(function(el, arr, index){
-			
 			
 			el = el.replace(/\//g, '^');
 			var url = {"storyURL" : el};	
@@ -570,32 +571,121 @@ app.nav = (function(){
 	
 	return {
 		
-		init : init
+		init : init,
+		feed : feed
 		
 	}
-	
-
-	
+		
 })();
 
-//--newsfeed manager
+
+//--newsfeed 
 app.newsfeed = (function(){
+	//subscribe: nav:content:done
 	
+	var build = function(){
+		console.log('build objects');
+		clear_feed();	
+		render_feed();
+	};
 	
+	var clear_feed = function(){
+		$('#articleList').empty();
+	};
 	
+	var render_feed = function(){
+
+		var	template,
+			feedSrc,
+			renderFeed;
 	
+		template = $('.newsfeed-template').text();
+		feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
+		renderFeed = _.template(template);		
+		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
+		app.events.publish('feed:loaded', 'The newsfeed is done loading.');
+		
+	};
+	
+	var load_listener = function(){
+		
+		$('#articleList li').click(function(e){
+			e.preventDefault();
+			var url = e.currentTarget.children[0].href;
+			clear_reader();
+			render_article(url);
+		});
+	};
+	
+	var clear_reader = function(){
+		
+		$('.reader').empty();
+	};
+	
+	var render_article = function(url){
+		var template,
+			feedSrc,
+			renderFeed,
+			thisArticle;
+		
+		template = $('.reader-template').text();
+		feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
+		renderFeed = _.template(template);	
+		
+		thisArticle = _.findWhere(feedSrc, {storyURL : url});
+		thisArticle.body = thisArticle.body.split('*#');
+		thisArticle.date = thisArticle.date.split('T')[0];
+		console.log(thisArticle);
+	
+		
+		$(renderFeed({thisArticle : thisArticle })).appendTo('.reader');
+		
+		
+	};
+	
+	var listeners = function(){
+		app.events.subscribe('nav:content:done', build);
+		app.events.subscribe('feed:loaded', load_listener);
+	};
+
 	var init = function(){
-		
-		
+		listeners();	
 	};
 	
 	return {
 		
 		init : init
-		
 	}
+		
 	
 })();
+
+/*
+	var render_article = function(){
+		
+		var template,
+			articleSrc,
+			renderFeed;
+		
+		template = $('.newsfeed-template').text();
+		articleSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
+		renderFeed = _.template(template);	
+		
+		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
+		
+	};
+
+
+
+
+*/
+
+
+
+
+
+
+
 
 // app.events.subscribe('status:update', updateStatus);
 // app.events.publish('status:update', [notes.length, _.where(notes,{liked : true}).length]);
@@ -605,6 +695,7 @@ app.newsfeed = (function(){
 app.init = (function(){
 	app.user.init();
 	app.nav.init();
+	app.newsfeed.init();
 })();
 
 

@@ -5,6 +5,51 @@
 
 
 <body>
+	
+	<script type="text/template" class="newsfeed-template">
+		<% _.each(articles, function(article){   %>
+		<li>
+			<a href="<%= article.storyURL %>" target="_blank" id="<%= article.cat %>"><cat><%= article.cat %></cat></a>
+			<h1><%= article.hed %></h1>
+		</li>
+		<% }); %>
+	</script>
+	
+	<script type="text/template" class="reader-template">
+		<div class="readerclose">x</div>
+		<div class="readerhead">
+			<h1><%= thisArticle.hed %></h1><br>
+			<div class="tags">
+				<h2><a href="<%= thisArticle.storyURL %>" target="_blank">View On Reuters</a></h2>
+				<h3><a href=""><%= thisArticle.date %></a></h3>
+				<div class="social-icons">
+					<img src="style/img/twitter.png" id="twitter" title="Tweet this article" alt="Tweet this article">
+					<img src="style/img/instapaper.png" id="instapaper" title="Save to Instapaper" alt="Save to Instapaper">
+					<img src="style/img/mail.png" id="mail" title="E-mail this article" alt="E-mail this article">
+					<img src="style/img/copy.png" id="copy" title="Copy url" alt="Copy url">
+				</div>
+				<br>
+			</div>
+		</div>
+		<div class="readerkeys">
+			<% _.each(thisArticle.keywords, function(key){   %>
+				<p>
+					<%= key %>
+				</p>
+			<% }); %>
+		</div>
+		<div class="readerimg">
+			<img src = "<%= thisArticle.img %>" class="img_thumb">
+		</div>
+		<div class="readerbody">
+			<% _.each(thisArticle.body, function(paragraph){   %>
+				<p>
+					<%= paragraph %>
+				</p>
+			<% }); %>
+		</div>
+		<div class="url"></div>
+	</script>
 
 	<div class="location"></div>
 
@@ -60,11 +105,17 @@
 			<div id="searchbar"><p id="icon">&#xf002;</p><input id="searchval" name="searchval" autocomplete="on"></div>
 	</div>
 	
+	<ul id="articleList"></ul>
 	
+	<div class="reader"></div>
 	
 
-	<script src="js/fingerprint.js"></script>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+
+	
+
+	<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="bower_components/fingerprint/fingerprint.js"></script>
+	<script type="text/javascript" src="bower_components/underscore/underscore.js"></script>
 	<script src="app.js"></script>
 
 </body>
