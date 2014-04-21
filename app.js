@@ -69,7 +69,8 @@ app.user = (function(){
 		boro = '',
 		lat = '',
 		lng = '',
-		name = 'here',
+		//name = 'here',
+		name = 'home',
 		type = '';
 	
 	//pull nabe + boro from google api
@@ -330,18 +331,25 @@ app.nav = (function(){
 		
 	//check to see if nav bar was built
 	var readyCheck = function(){
+		console.log('ready check');
 		var loc = $('select#locationType').find('option:selected').val();
 		var place = $('select#locationType').find('#here').val();
 
-		if(loc !== 'nabe'){
-			if(place !== 'here'){
-				callLog();
+		console.log('loc is: ', loc);
+		console.log('place is: ', place);
+		
+		//check to see that user's data loaded into drop downs
+		if(loc != 'nabe'){
+			if(place != 'here'){
+				//callLog();						
+				app.events.publish('nav:ready', 'Navigation is fully loaded.');
+				app.events.publish('feed:refresh', 'Ready to load articles.');
 			}
 		}else{
 			setTimeout(readyCheck, 1000);	
 		};	
 		
-		app.events.publish('nav:ready', 'Navigation is fully loaded.');
+
 	};
 		
 	//category name
@@ -434,42 +442,48 @@ app.nav = (function(){
 		app.events.subscribe('location:ready', build);
 
 		app.events.subscribe('nav: ready', function(){
-			//--nav:newstype listeners
+			
+			//-- set up nav:newstype listeners
 			//if news type changes, call db
 			$('select#newsType').change(function(){ 
 
-			//if user selects 'most recent'
-			if( category() == 'All'){
-				app.events.publish('nav:most_read', 'nav is set to most read');
-			}else{
-				app.events.publish('nav:category', 'nav is set to a category');
-			};
-			
-			app.events.publish('feed:refresh', 'The category was changed.');
-
-		});		
+				//if user selects 'most recent'
+				if( category() == 'All'){
+					app.events.publish('nav:most_read', 'nav is set to most read');
+				}else{
+					app.events.publish('nav:category', 'nav is set to a category');
+				};
+				
+				app.events.publish('feed:refresh', 'The category was changed.');
+	
+			});
+					
 			app.events.subscribe('nav:most_read', function(){ 
-			$('#locationType').css('display', 'inline');
-			$('#inLabel').css('display', 'inline');
-		});
+				$('#locationType').css('display', 'inline');
+				$('#inLabel').css('display', 'inline');
+			});
 			app.events.subscribe('nav:category', function(){ 
-			$('#locationType').css('display', 'none');
-			$('#inLabel').css('display', 'none');
-		});
+				$('#locationType').css('display', 'none');
+				$('#inLabel').css('display', 'none');
+			});
 			
 			//if location changes, call db
 			$('select#locationType').change(function(){ 
-			app.events.publish('feed:refresh', 'The lcoation was changed.');
-		});
+				app.events.publish('feed:refresh', 'The lcoation was changed.');
+			});
 			
 			//if timerange changes, call db
 			$('select#timeType').change(function(){ 
-			app.events.publish('feed:refresh', 'The time range was changed.');
-		});
+				app.events.publish('feed:refresh', 'The time range was changed.');
+			});
 	
-			//refresh feed
-			app.events.subscribe('feed:refresh', getArticleList);
+			
 		});
+		
+		//refresh feed
+		app.events.subscribe('feed:refresh', getArticleList);
+			
+		
 	};
 		
 	//--init
