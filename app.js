@@ -227,11 +227,13 @@ app.database = (function(){
 	var response =  '',
 		baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
 
-	//find in db.
+	//find in article collection
 	var find = function(query, callback, errorcallback){
-
-		if(!callback){callback = function(){}};
-		if(!errorcallback){errorcallback = function(){}};
+	
+		if(typeof(query) == "object"){
+			query = JSON.stringify(query);
+		};
+		
 
 		$.ajax({
 			type: "GET",
@@ -246,11 +248,32 @@ app.database = (function(){
 
 	};
 	
-	//track in db.
-	var track = function(query, callback, errorcallback){
+	//find in user collection
+	var user = function(query, callback, errorcallback){
+	
+		if(typeof(query) == "object"){
+			query = JSON.stringify(query);
+		};
+			
+		console.log('user + ', query);
+
+		/*		
+		$.ajax({
+			type: "GET",
+			dataType: 'json',
+			url: baseurl + 'user/' + query,
+		}).success(function(data) {
+				response = data;
+				//callback(data);
+				console.log('done');
+				console.log(data);
+		});
+		*/
 		
-		if(!callback){callback = function(){}};
-		if(!errorcallback){errorcallback = function(){}};
+	};
+	
+	//track in user collection.
+	var track = function(query, callback, errorcallback){
 
 		$.ajax({
 			url: baseurl + 'track/' + query,
@@ -264,8 +287,15 @@ app.database = (function(){
 	};
 	
 	var init = function(call, query, callback, errorcallback){
-	
+
+		if(!callback){callback = function(){}};
+		if(!errorcallback){errorcallback = function(){}};
+		
 		switch(call){
+			case 'user':
+				user(query, callback, errorcallback);
+			break;
+
 			case 'find':
 				find(query, callback, errorcallback);
 			break;
@@ -325,33 +355,29 @@ app.nav = (function(){
 	};
 	var location_call = function(){
 		
-		var call;
-		
+		var call = '';
 		
 			switch( location() ) {
 			
 				case 'here':
-					if(category() != "All"){
-						call = '"{user.geoName" : "'+ app.user.name+ '"}, ';
-						console.log(call);
+					if(category() == "All"){
+						call = '"user.geoName" : "'+ app.user.name+ '"';
 					}else{
 						call = '';
 					};
 				break;
 			
 				case 'nabe':
-					if(category() != "All"){
-						call =  '"{user.geoNabe" : "'+ app.user.nabe+ '"}, ';
-						console.log(call);
+					if(category() == "All"){
+						call =  '"user.geoNabe" : "'+ app.user.nabe+ '" ';
 					}else{
 						call = '';
 					};
 				break;
 				
 				case 'boro':
-					if(category() != "All"){
-						call =  '"{user.geoBoro" : "'+ app.user.boro+ '"},';
-						console.log(call);
+					if(category() == "All"){
+						call =  '"user.geoBoro" : "'+ app.user.boro+ '"';
 					}else{
 						call = ''
 					};
@@ -380,7 +406,7 @@ app.nav = (function(){
 		date_past = new Date(date_past).toISOString();
 		date_now = date_now.toISOString();
 		
-		var call = '{"date" : {$gte: ISODate("' + date_past + '"), $lt: ISODate("' + date_now + '")}}';
+		var call = '"date" : {$gte: ISODate("' + date_past + '"), $lt: ISODate("' + date_now + '")}';
 		return call;
 		
 	};
@@ -388,10 +414,18 @@ app.nav = (function(){
 	
 	//--get articles
 	var getArticleList = function(){
-		console.log(time_call());
-		console.log(location_call());
+
+		var call = '';
+		
+		if(category() == 'All'){
+			call = '{' + time_call() + ', ' + location_call() + '}';
+			app.database.init('user', call);
+		}else{
+			call = '{ "time" : ' + time() + ', "cat" : "' + category() + '"}';
+			app.database.init('find', call);
+		};
+
 	};
-	
 	
 	//--listeners
 	var listeners = function(){
