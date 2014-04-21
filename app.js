@@ -227,6 +227,7 @@ app.database = (function(){
 
 	var response =  '',
 		baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
+		//baseurl = 'http://localhost:5000/';
 
 	//find in article collection
 	var find = function(query, callback, errorcallback){
@@ -258,22 +259,25 @@ app.database = (function(){
 			
 		console.log('user + ', query);
 
-		/*		
+			
 		$.ajax({
 			type: "GET",
 			dataType: 'json',
-			url: baseurl + 'user/' + query,
+			//url: baseurl + 'user/' + query,
+			url: baseurl + 'user/{"date_start" : "2014-04-10T17:26:36.174Z", "today" : "2014-04-21T17:26:36.175Z", "geoNabe" : "Union Square"}',
 		}).success(function(data) {
 				response = data;
 				//callback(data);
 				console.log('done');
 				console.log(data);
 		});
-		*/
-		
+			
 	};
 	
 	//track in user collection.
+	
+	/* {"user": {"finger": "asdflkasfd", "geoLat": 40.7229, "geoLon": -73.8424, "geoNabe": "Greenpoint", "geoBoro": "Brooklyn", "geoName": "Home"}, "dropDown": {"term": "New York"}} */
+	
 	var track = function(query, callback, errorcallback){
 
 		$.ajax({
@@ -313,7 +317,6 @@ app.database = (function(){
 		init : init
 	};
 
-	/* {"user": {"finger": "asdflkasfd", "geoLat": 40.7229, "geoLon": -73.8424, "geoNabe": "Greenpoint", "geoBoro": "Brooklyn", "geoName": "Home"}, "dropDown": {"term": "New York"}} */
 
 })();
 
@@ -369,7 +372,7 @@ app.nav = (function(){
 			
 				case 'here':
 					if(category() == "All"){
-						call = '"user.geoName" : "'+ app.user.name+ '"';
+						call = '"geoName" : "'+ app.user.name+ '"';
 					}else{
 						call = '';
 					};
@@ -377,7 +380,7 @@ app.nav = (function(){
 			
 				case 'nabe':
 					if(category() == "All"){
-						call =  '"user.geoNabe" : "'+ app.user.nabe+ '" ';
+						call =  '"geoNabe" : "'+ app.user.nabe+ '" ';
 					}else{
 						call = '';
 					};
@@ -385,7 +388,7 @@ app.nav = (function(){
 				
 				case 'boro':
 					if(category() == "All"){
-						call =  '"user.geoBoro" : "'+ app.user.boro+ '"';
+						call =  '"geoBoro" : "'+ app.user.boro+ '"';
 					}else{
 						call = ''
 					};
@@ -408,13 +411,24 @@ app.nav = (function(){
 		var x = parseFloat(x);
 		return x
 	};
-	var time_call = function(){
+	var time_today = function(){
+		var now = new Date;
+		now = now.toISOString();
+		return now;
+	};
+	
+	var time_start = function(){
 		var date_now = new Date;
 		var date_past = date_now - 1000 * 60 * 60 * 24 * time();
 		date_past = new Date(date_past).toISOString();
-		date_now = date_now.toISOString();
 		
-		var call = '"date" : {$gte: ISODate("' + date_past + '"), $lt: ISODate("' + date_now + '")}';
+		return date_past;
+		
+	};
+	
+	var time_call = function(){
+				
+		var call = '{$gte: ISODate(\'' + time_start() + '\'), $lt: ISODate(\'' + time_today() + '\')}';
 		return call;
 		
 	};
@@ -426,10 +440,12 @@ app.nav = (function(){
 		var call = '';
 		
 		if(category() == 'All'){
-			call = '{' + time_call() + ', ' + location_call() + '}';
+			call = '{"date_start" : "' + time_start() + '", "today" : "' + time_today() + '", ' + location_call() + '}';
+			//console.log(call);
 			app.database.init('user', call);
 		}else{
-			call = '{ "time" : ' + time() + ', "cat" : "' + category() + '"}';
+			call = '{ "date" : "' + time_call() + '", "cat" : "' + category() + '"}';
+			//console.log(call);
 			app.database.init('find', call);
 		};
 
@@ -497,8 +513,7 @@ app.nav = (function(){
 		
 	}
 	
-	
-	
+
 	
 })();
 
@@ -520,9 +535,6 @@ app.newsfeed = (function(){
 	}
 	
 })();
-
-
-
 
 // app.events.subscribe('status:update', updateStatus);
 // app.events.publish('status:update', [notes.length, _.where(notes,{liked : true}).length]);
