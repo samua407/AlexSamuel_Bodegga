@@ -25,6 +25,35 @@ app.events = (function() {
 
 })();
 
+//--tracking manager
+app.track = (function(){
+		
+	var obj = {};
+		obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
+		obj.articleClick = {'name': '', 'url': '', 'keys': [], 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};
+		//search: { terms: String, resultKeys: [String] },
+		//dropDown: { term: String, resultKeys: [String] },
+	
+	var submit = function(){
+		console.log('tracking...');
+		console.log(obj);
+		var query = JSON.stringify(obj);
+		app.database.init('track', query);
+	};
+	
+	var subscribe = function(){
+		app.events.subscribe('track', submit);
+		
+	};
+	
+	subscribe();	
+		
+	return {
+		obj : obj 
+	}
+		
+})();
+
 //---user manager 
 app.user = (function(){
 
@@ -102,9 +131,10 @@ app.user = (function(){
 			    var publishLoc = "You are in " + app.user.nabe + ", " + app.user.boro + ".";
 				
 				app.events.publish('location:ready', publishLoc);
-		
+						
 				//call foursquare for loc check in
 				exploreNabe();	
+
 		    }
 		});
 
@@ -116,7 +146,8 @@ app.user = (function(){
 		var pos = lat + "," + lng;
 		var url = 'https://api.foursquare.com/v2/venues/search?ll='+ pos+'&client_id=***&client_secret=***&v=20131016'
 		
-
+		track();
+		
 		//preparing functions for venue list jquery resp
 		var namePullCount = 0;
 			optBuildCount = 0,
@@ -197,9 +228,13 @@ app.user = (function(){
 										
 		});
 
-	
 	};
 	
+	var track = function(){
+		app.track.obj.user = {'finger': fp(), 'geoLat': lat, 'geoLon': lng, 'geoNabe': app.user.nabe, 'geoBoro': app.user.boro, 'geoName': name, 'geoType': type};
+		app.events.publish('track:updated', 'Obj.User updated');
+	};
+		
 	var init = function(){
 		navigator.geolocation.getCurrentPosition(getNabe);
 		//console.log('time: ', time());
@@ -293,9 +328,9 @@ app.database = (function(){
 			url: baseurl + 'track/' + query,
 		}).success(function(data) {
 				response = data;
-				//callback(data);
+				callback(data);
 				//console.log('done');
-				console.log(data);
+				//console.log(data);
 		});
 		
 	};
@@ -441,7 +476,6 @@ app.nav = (function(){
 		
 	};
 	
-	
 	//--get article list from either user db or article db
 	var getArticleList = function(){
 
@@ -454,6 +488,7 @@ app.nav = (function(){
 		}else{
 			call = '{' + time_call() + ', "cat" : "' + category() + '"}';
 			var callback = function(data){
+				app.nav.feed = '';
 				app.nav.feed = JSON.parse(data);
 				app.events.publish('nav:content:done', 'The ' + category() + ' Article array is ready.');
 			};
@@ -491,6 +526,7 @@ app.nav = (function(){
 		var num_results = articleURLs.length;
 		var num_pushed = 0;
 		var callback = function(data){
+			app.nav.feed = '';
 			app.nav.feed = JSON.parse(data);
 			app.events.publish('nav:content:done', 'The Most Read Article array is ready.')
 		};
@@ -578,22 +614,23 @@ app.nav = (function(){
 		
 })();
 
-
-//--newsfeed 
-app.newsfeed = (function(){
-	//subscribe: nav:content:done
+//--newsfeed + article manager
+app.content = (function(){
 	
+	//--FEED
+	//build feed
 	var build = function(){
-		console.log('build objects');
-		clear_feed();	
-		render_feed();
+		feed_clear();	
+		feed_render();
 	};
 	
-	var clear_feed = function(){
+	//empty feed
+	var feed_clear = function(){
 		$('#articleList').empty();
 	};
 	
-	var render_feed = function(){
+	//render feed list
+	var feed_render = function(){
 
 		var	template,
 			feedSrc,
@@ -604,25 +641,40 @@ app.newsfeed = (function(){
 		renderFeed = _.template(template);		
 		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
 		app.events.publish('feed:loaded', 'The newsfeed is done loading.');
+		app.events.publish('load:stop', '');
 		
 	};
 	
-	var load_listener = function(){
+	//feed item click
+	var feed_click = function(){
 		
 		$('#articleList li').click(function(e){
 			e.preventDefault();
 			var url = e.currentTarget.children[0].href;
-			clear_reader();
-			render_article(url);
+			reader_clear();
+			reader_render(url);
 		});
+		
 	};
 	
-	var clear_reader = function(){
-		
+	
+	//--READER
+	//toggle reader visibility
+	var reader_close = function(){
+		$('.reader').css('display', 'none');	
+	};
+	var reader_open = function(){
+		$('.reader').css('display', 'block');			
+	};
+
+	//clear current story
+	var reader_clear = function(){	
+		app.events.publish('track', 'Track prev article.');
 		$('.reader').empty();
 	};
 	
-	var render_article = function(url){
+	//render current story
+	var reader_render = function(url){
 		var template,
 			feedSrc,
 			renderFeed,
@@ -633,23 +685,103 @@ app.newsfeed = (function(){
 		renderFeed = _.template(template);	
 		
 		thisArticle = _.findWhere(feedSrc, {storyURL : url});
+		
+		//track article
+		app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
+		app.events.publish('track:updated', 'Obj.articleClick updated');
+		
+		
 		thisArticle.body = thisArticle.body.split('*#');
 		thisArticle.date = thisArticle.date.split('T')[0];
-		console.log(thisArticle);
-	
-		
+		thisArticle.keywords = thisArticle.keywords[0].split(',');
+			
 		$(renderFeed({thisArticle : thisArticle })).appendTo('.reader');
+		app.events.publish('reader:loaded', 'Current article is loaded in the reader.');
+		app.events.publish('reader:show', '');
+		
 		
 		
 	};
 	
-	var listeners = function(){
+	//reader keyword click
+	var reader_keyword = function(e){
+		var key = e.currentTarget.innerText;
+		console.log(key);
+		var callback = function(data){
+			app.nav.feed = '';
+			app.nav.feed = JSON.parse(data);
+			app.events.publish('nav:content:done', 'The results array for the search about '+ key + ' is ready.');
+		};
+		var query = '{"keywords" : "' + key + '"}'
+		app.database.init('find', query, callback);
+		
+	};
+	
+	//reader listeners
+	var reader_listen = function(){
+
+		$( '.tags h2').click(function(e){
+			app.track.obj.articleClick.ct = true;	
+			app.events.publish('track:updated', 'Obj.articleClick updated');
+			//console.log(e.currentTarget.href);
+		});
+		
+		$('.readerkeys p').click(function(e){
+			e.preventDefault();
+			app.events.publish('load:start', '');
+			reader_keyword(e);
+		});	
+		
+		$('.img_thumb').click(function(){
+			//ZOOM IN - imgview.zoomin();
+			console.log('image zoom');
+		});
+		
+		$('.readerclose').click(function(){
+			app.events.publish('reader:hide', 'Clicked reader close.');
+		});
+		
+		$('#twitter').click(function(){
+			app.track.obj.articleClick.tweet = true;	
+			app.events.publish('track:updated', 'Obj.articleClick updated');
+			app.events.publish('social:twitter', 'Clicked Twitter Share.');
+		});
+		
+		$('#instapaper').click(function(){
+			app.track.obj.articleClick.instapaper = true;	
+			app.events.publish('track:updated', 'Obj.articleClick updated');
+			app.events.publish('social:instapaper', 'Clicked Instapaper Share.');
+
+		});
+		
+		$('#mail').click(function(){
+			app.track.obj.articleClick.email = true;	
+			app.events.publish('track:updated', 'Obj.articleClick updated');
+			app.events.publish('social:mail', 'Clicked Mail Share.');
+		});
+		
+		$('#copy').click(function(){
+			app.track.obj.articleClick.copy = true;	
+			app.events.publish('track:updated', 'Obj.articleClick updated');
+			app.events.publish('social:copy', 'Clicked Copy URL.');
+	
+		});
+		
+	};
+	
+	
+	//--GENERAL
+	//subscriptions
+	var subscriptions = function(){
 		app.events.subscribe('nav:content:done', build);
-		app.events.subscribe('feed:loaded', load_listener);
+		app.events.subscribe('feed:loaded', feed_click);
+		app.events.subscribe('reader:loaded', reader_listen);
+		app.events.subscribe('reader:hide', reader_close);
+		app.events.subscribe('reader:show', reader_open);
 	};
 
 	var init = function(){
-		listeners();	
+		subscriptions();	
 	};
 	
 	return {
@@ -660,62 +792,10 @@ app.newsfeed = (function(){
 	
 })();
 
-/*
-	var render_article = function(){
-		
-		var template,
-			articleSrc,
-			renderFeed;
-		
-		template = $('.newsfeed-template').text();
-		articleSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
-		renderFeed = _.template(template);	
-		
-		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
-		
-	};
-
-
-
-
-*/
-
-
-
-
-
-
-
-
-// app.events.subscribe('status:update', updateStatus);
-// app.events.publish('status:update', [notes.length, _.where(notes,{liked : true}).length]);
-
-
-
+//--init
 app.init = (function(){
 	app.user.init();
 	app.nav.init();
-	app.newsfeed.init();
+	app.content.init();
 })();
 
-
-
-
-//		ArticleSchema = mongoose.Schema({
-//		    hed: String,
-//		    storyURL: { type: String, unique: true, index: true },
-//		    date: Date,
-//		    img: String,
-//		    keywords: [],
-//		    cat: String,
-//		    body: String   
-//		}),
-
-
-//		UserSchema = mongoose.Schema({
-//		    date: { type: Date, default: Date.now },
-//		    user: { finger: String, geoLat: Number, geoLon: Number, geoNabe: String, geoBoro: String, geoName: String, geoType: String},
-//		    search: { terms: String, resultKeys: [String] },
-//		    dropDown: { term: String, resultKeys: [String] },
-//		    articleClick: { name: String, url: String, keys: [String], tweet: Boolean, instapaper: Boolean, email: Boolean, copy: Boolean, ct: Boolean }  
-//		}),
