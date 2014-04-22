@@ -258,7 +258,7 @@ app.database = (function(){
 
 	//find in article collection
 	var find = function(query, callback, errorcallback){
-	
+
 		if(typeof(query) == "object"){
 			query = JSON.stringify(query);
 		};
@@ -334,7 +334,7 @@ app.database = (function(){
 	};
 	
 	var init = function(call, query, callback, errorcallback){
-
+		
 		if(!callback){callback = function(){}};
 		if(!errorcallback){errorcallback = function(){}};
 		
@@ -614,6 +614,64 @@ app.nav = (function(){
 		
 })();
 
+app.search = (function(){
+	
+	//--'enter' listeners
+	var listen = function(){
+		//listen for "enter" on searchf eed, then search
+		$("#searchval").keypress(function(e){
+			if (e.which == 13){
+				var searchval = $('#searchval').val();
+				call(searchval);
+				$('#searchval').val('');
+				$('#loading_feed').fadeIn();
+				
+			}
+		});
+		
+		//shrink search
+		$("#searchval").focusout(function(){
+			$('#searchbar').animate({width: '22px'});			
+		});
+	};
+	
+	//--call database
+	var call = function(query){
+	
+		query = '{"keywords":"' + query + '"}'
+		console.log(query);
+		var callback = function(data){
+			app.nav.feed = '';
+			app.nav.feed = JSON.parse(data);
+			app.events.publish('nav:content:done', 'Search array is ready.');
+		};
+		app.database.init('find', query, callback);
+		
+	};
+	
+	//--init listeners
+	var init = function(){
+		
+		$('#searchbar').click(function(){
+			listen();
+			$('#searchbar').focusout(function(){
+				$('#searchbar').animate({width: '22px'});
+				$('#searchval').val('');
+			});
+		});
+		
+		$('#searchbar').hover(function(){
+			$('#searchbar').animate({width: '200px'});
+		});
+		
+	};
+	
+	return {
+		init : init
+	}
+	
+})();
+
 //--newsfeed + article manager
 app.content = (function(){
 	
@@ -891,6 +949,7 @@ app.loading = (function(){
 app.init = (function(){
 	app.user.init();
 	app.nav.init();
+	app.search.init();
 	app.content.init();
 	app.loading.init();
 	//$('#blur').fadeOut();
