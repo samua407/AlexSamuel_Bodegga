@@ -1,15 +1,24 @@
 <html>
 <head>
 
+<title>Bodeg.ga</title>
+
+<link rel="icon" type="image/x-icon" href="style/img/fav.ico" />
+<link rel="apple-touch-icon" href=“style/img/fav.ico" />
+<link rel="stylesheet" href="style/normalize.min.css">
+<link rel="stylesheet" href="style/main.css">
+<link rel="stylesheet" href="style/fonts/font-awesome/css/font-awesome.min.css">
+
 </head>
 
 
 <body>
 	
+	<!--templates-->
 	<script type="text/template" class="newsfeed-template">
 		<% _.each(articles, function(article){   %>
 		<li>
-			<a href="<%= article.storyURL %>" target="_blank" id="<%= article.cat %>"><cat><%= article.cat %></cat></a>
+			<h2><a href="<%= article.storyURL %>" target="_blank" id="<%= article.cat %>"><cat><%= article.cat %></cat></a></h2>
 			<h1><%= article.hed %></h1>
 		</li>
 		<% }); %>
@@ -33,9 +42,7 @@
 		</div>
 		<div class="readerkeys">
 			<% _.each(thisArticle.keywords, function(key){   %>
-				<p>
-					<%= key %>
-				</p>
+				<p><a href><%= key %></a></p>
 			<% }); %>
 		</div>
 		<div class="readerimg">
@@ -50,36 +57,43 @@
 		</div>
 		<div class="url"></div>
 	</script>
-
+	
+	
 	<div class="location"></div>
-
-
+	<div id="blur"></div>
+		
+	
+	<!-- header -->
+	<div class="logo">
+		<h1>BDGA</h1>
+	</div>
+	
 	<!-- navbar -->
 	<div class="nav">
 				<form>
 					<p id="showMeLabel">Show me </p> 
 					
 					<select id="newsType">
-						<option id="All" selected>the most read</option>
-						<option id="Arts" >arts + culture</option>
-						<option id="Business">business</option>
-			<!-- 			<option id="Education">education</option> -->
-						<option id="Entertainment">entertainment</option>
-						<option id="Environment" >environmental</option>
-			<!-- 			<option id="Food">food</option> -->
-						<option id="Health">health</option>
-						<option id="Lifestyle">lifestyle</option>
+						<option id="All" selected>The Most Read</option>
+						<option id="Arts" >Arts + Culture</option>
+						<option id="Business">Business</option>
+						<!-- <option id="Education">education</option> -->
+						<option id="Entertainment">Entertainment</option>
+						<option id="Environment" >Environmental</option>
+						<!-- <option id="Food">food</option> -->
+						<option id="Health">Health</option>
+						<option id="Lifestyle">Lifestyle</option>
 						<option id="New York">New York</option>
-						<option id="Media">media</option>
-						<option id="Money">money</option>
-						<option id="Politics">political</option>
-						<option id="Science">science</option>
-						<option id="Sports">sports</option>
-						<option id="Tech">technology</option>
-			<!-- 			<option id="Travel">travel</option> -->
+						<option id="Media">Media</option>
+						<option id="Money">Money</option>
+						<option id="Politics">Political</option>
+						<option id="Science">Science</option>
+						<option id="Sports">Sports</option>
+						<option id="Tech">Technology</option>
+						<!-- <option id="Travel">travel</option> -->
 						<option id="United States">United States</option>
 						<option id="oddly enough">Oddly Enough</option>
-						<option id="World">world</option>
+						<option id="World">World</option>
 					</select>
 					
 					<p id="newsLabel"> news </p>
@@ -101,18 +115,54 @@
 						<option id="30" >month</option>
 					</select>
 				</form>
-			<div id="loading_feed"></div>
+			<div id="loading_feed"><i class="fa fa-spinner fa-spin"></i></div>
 			<div id="searchbar"><p id="icon">&#xf002;</p><input id="searchval" name="searchval" autocomplete="on"></div>
 	</div>
+
+	<!-- sidebar -->
+	<div class = "readersidebarWrapper">
+		<div class ="readersidebar">
+			
+			<div id="shownews-active"><img src="style/img/paper.png"></div>
+			<div id="showtwitter"><img src="style/img/pound.png"></div>
+			<div id="sidebar-hide"><img src="style/img/hideside.png"></div>
+			<div id="sidebar-show"><img src="style/img/showside.png"></div>
+			
+			<!-- feed -->
+			<section class="newsWrapper-active">	
+				<div class="newsFeed">					
+					<ul id="articleList">
+						<li class="template"> <h2><a><pub>pub</pub></a></h2><h1>head</h1> </li>
+					</ul>
+				</div>
+			</section>
+			
+			<!-- twitter -->
+			<section class="twitterWrapper">	
+				<div class="twitterFeed">					
+					<ul id="tweetList">
+						<li class="template"> <h2></h2><h1></h1></li>				
+					</ul>
+				</div>
+			</section>
+		</div>
+	</div>
+
+	<!-- body -->
+	<section class="body">
 	
-	<ul id="articleList"></ul>
-	
-	<div class="reader"></div>
+		<!-- reader -->
+		<div class="reader">
+		</div>  
 	
 
-
+	</section>
 	
+	<!-- copyURL -->
+	<div id="twlo"></div>
 
+
+	<!--JS-->
 	<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript" src="bower_components/fingerprint/fingerprint.js"></script>
 	<script type="text/javascript" src="bower_components/underscore/underscore.js"></script>
