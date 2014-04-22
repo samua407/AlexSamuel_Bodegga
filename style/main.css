@@ -97,14 +97,17 @@ opacity: 0;
 .logo {
 	background-color: #0392bc;
 	width: 130px;
-	margin-top: 20px;
+	height: 40px;
+	position: absolute;
+	top: 20px;
 }
 
 .logo h1 {
 	font: 40px Code;
 	color: #ffffff;
 	padding-left: 15px;
-	padding-top: 4px;
+	margin-top: 0;
+/* 	padding-top: 4px; */
 }
 
 /*--nav--*/

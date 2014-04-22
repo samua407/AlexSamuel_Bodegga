@@ -90,8 +90,8 @@ app.user = (function(){
 		boro = '',
 		lat = '',
 		lng = '',
-		//name = 'here',
-		name = 'home',
+		name = 'here',
+		//name = 'home',
 		type = '';
 	
 	//pull nabe + boro from google api
@@ -881,6 +881,103 @@ app.content = (function(){
 	
 })();
 
+//--twitterfeed manager
+app.twitterfeed = (function(){
+
+	var init = function(){
+		empty();
+		app.events.subscribe('reader:loaded', call);	
+		
+	};
+	
+	var empty = function(){
+
+		$('.tweet').remove();
+		$('.tweet_error').remove();		
+	
+	};
+	
+	var call = function(){
+		console.log('call...');
+		var url = $('.tags h2 a')[0].href;
+		url = 'lib/soc/twitter_roll.php?q=' + url;
+
+		$.ajax({
+				url: url
+			}).success(function(data) {
+				parse(data);			
+			}).error(function(data){				
+				errorMsg();
+			});
+			
+	};
+	
+	var parse = function(d){
+		var arr = JSON.parse(d);
+		var num = arr.length;
+		var i;
+		
+		for(i = 0; i<num; i++){
+			if(arr[i]){
+				var name = arr[i].user.screen_name;
+				if(name.length > 1){
+					var namelink = 'https://twitter.com/'+name;
+					var tweet = arr[i].text;
+					var tweetlink = 'https://twitter.com/'+name+'/status/'+arr[i].id_str;
+					build(name, namelink, tweet, tweetlink);
+				};
+			};
+		};
+		
+	};
+	
+	var errorMsg = function(){
+	
+		var template = $('.twitterFeed li.template');
+		var errorMsg = template.clone();
+		errorMsg.removeClass('template').addClass('tweet_error');
+		var msg = document.createElement('p');
+		msg.innerHTML = "No one has Tweeted about this. Start the conversation!";
+		errorMsg.append(msg);
+		$('.twitterFeed ul').append(errorMsg);
+		
+
+	};
+	
+	var build = function(name, namelink, tweet, tweetlink){
+		//build newsfeed block
+		var template = $('.twitterFeed li.template');
+		var feedBlock = template.clone();
+		feedBlock.removeClass('template').addClass('tweet');
+		
+		//feedBlock.find('name').text(name).text();
+		var name_link = document.createElement('a');
+		var name_link_name = document.createTextNode('@' + name);
+		name_link.appendChild(name_link_name);
+		name_link.href = namelink;
+		name_link.target = "_blank";
+		feedBlock.find('h2').append(name_link);
+		
+		var tweet_link = document.createElement('a');
+		var tweet_link_text = document.createTextNode(tweet);
+		tweet_link.appendChild(tweet_link_text);
+		tweet_link.href = tweetlink;
+		tweet_link.target = "_blank";
+		feedBlock.find('h1').append(tweet_link);
+ 	
+		$('.twitterFeed ul').append(feedBlock);
+		
+	};
+	
+	return {
+		init: init
+	};
+	
+	
+})();
+
+
+
 //--blur manager
 app.blur = (function(){
 	
@@ -951,7 +1048,7 @@ app.init = (function(){
 	app.nav.init();
 	app.search.init();
 	app.content.init();
+	//app.twitterfeed.init();
 	app.loading.init();
-	//$('#blur').fadeOut();
 	app.blur.hide();
 })();
