@@ -89,6 +89,7 @@ opacity: 0;
 
 .location select:focus {
 	outline:0px none transparent;
+	-moz-outline:0 none transparent;
 }
 
 

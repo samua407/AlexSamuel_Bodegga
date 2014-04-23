@@ -91,7 +91,6 @@ app.user = (function(){
 		lat = '',
 		lng = '',
 		name = 'here',
-		//name = 'home',
 		type = '';
 	
 	//pull nabe + boro from google api
@@ -144,7 +143,7 @@ app.user = (function(){
 		var pos = lat + "," + lng;
 		var url = 'https://api.foursquare.com/v2/venues/search?ll='+ pos+'&client_id=***&client_secret=***&v=20131016'
 		
-		track();
+
 		
 		//preparing functions for venue list jquery resp
 		var namePullCount = 0;
@@ -176,11 +175,14 @@ app.user = (function(){
 
 		var pullName = function(element, index, array){
 			namePullCount++;
-			var v = {"name": element.name, "type" : element.categories[0].name};
-			initialList.push(v);
 			
-			if(namePullCount == venueTotal){
-				initialList.forEach(addVenueOptions);
+			if(element.name){
+				var v = {"name": element.name, "type" : element.categories[0].name};
+				initialList.push(v);
+				
+				if(namePullCount == venueTotal){
+					initialList.forEach(addVenueOptions);
+				};
 			};
 		};
 		
@@ -204,11 +206,14 @@ app.user = (function(){
 			location.change(function(data){
 				
 				var selected = $(this).find('option:selected');
-				name = selected[0].text.replace("'", "");
-				type = selected[0].value;
-			
-				//post();
-				//nav.init();
+				app.user.name = selected[0].text.replace("'", "");
+				app.user.type = selected[0].value;
+				
+				var publishLoc = 'Locaiton is ' + app.user.name + ', which is a ' + app.user.type;
+				app.events.publish('location:selected', publishLoc);
+				
+				$(this).blur();		
+				track();
 				
 			});
 	
@@ -387,8 +392,7 @@ app.nav = (function(){
 
 		//check to see that user's data loaded into drop downs
 		if(loc != 'nabe'){
-			if(place != 'here'){
-				//callLog();						
+			if(place != 'here'){				
 				app.events.publish('nav:ready', 'Navigation is fully loaded.');
 				app.events.publish('feed:refresh', 'Ready to load articles.');
 			}
@@ -551,7 +555,7 @@ app.nav = (function(){
 	var listeners = function(){
 
 		//--nav:general listeners	
-		app.events.subscribe('location:ready', build);
+		app.events.subscribe('location:selected', build);
 		app.events.subscribe('nav: ready', function(){
 			
 			//-- set up nav:newstype listeners
@@ -1011,9 +1015,13 @@ app.blur = (function(){
 		
 	};
 	
+	var init = function(){
+		
+		app.events.subscribe('location:selected', hide);
+	};
+	
 	return {
-		hide : hide,
-		show : show
+		init : init,
 	};
 })();
 
@@ -1050,5 +1058,5 @@ app.init = (function(){
 	app.content.init();
 	//app.twitterfeed.init();
 	app.loading.init();
-	app.blur.hide();
+	app.blur.init();
 })();
