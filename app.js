@@ -1,3 +1,4 @@
+
 var app = app || {};
 
 //--events manager
@@ -29,7 +30,7 @@ app.events = (function() {
 app.track = (function(){
 		
 	var obj = {};
-		obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
+		obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'city' : '', 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
 		obj.articleClick = {'name': '', 'url': '', 'keys': [], 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};
 		//search: { terms: String, resultKeys: [String] },
 		//dropDown: { term: String, resultKeys: [String] },
@@ -175,15 +176,23 @@ app.user = (function(){
 
 		var pullName = function(element, index, array){
 			namePullCount++;
-			
-			if(element && element.name){
-				var v = {"name": element.name, "type" : element.categories[0].name};
+					
+			if(element.name){
+				var name = element.name,
+					type = 'Unknown';
+				
+				if(element.categories[0]){
+					type = element.categories[0].name;
+				}
+								
+				var v = {"name": name, "type" : type};	
 				initialList.push(v);
 				
 				if(namePullCount == venueTotal){
 					initialList.forEach(addVenueOptions);
 				};
 			};
+
 		};
 		
 		var buildVenueList = function(){
@@ -212,8 +221,10 @@ app.user = (function(){
 				var publishLoc = 'Locaiton is ' + app.user.name + ', which is a ' + app.user.type;
 				app.events.publish('location:selected', publishLoc);
 				
-				$(this).blur();		
 				track();
+				$(".landing").fadeOut('fast');			
+				
+				
 				
 			});
 	
@@ -234,7 +245,8 @@ app.user = (function(){
 	};
 	
 	var track = function(){
-		app.track.obj.user = {'finger': fp(), 'geoLat': lat, 'geoLon': lng, 'geoNabe': app.user.nabe, 'geoBoro': app.user.boro, 'geoName': name, 'geoType': type};
+	
+		app.track.obj.user = {'finger': fp(), 'geoLat': lat, 'geoLon': lng, 'city' : 'NYC', 'geoNabe': app.user.nabe, 'geoBoro': app.user.boro, 'geoName': app.user.name, 'geoType': app.user.type};
 		app.events.publish('track:updated', 'Obj.User updated');
 	};
 		
@@ -258,12 +270,14 @@ app.user = (function(){
 app.database = (function(){
 
 	var response =  '',
-		//baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
-		baseurl = 'http://localhost:5000/';
+		baseurl = 'http://peaceful-spire-5824.herokuapp.com/';
+		//baseurl = 'http://localhost:5000/';
 
 	//find in article collection
 	var find = function(query, callback, errorcallback){
 
+		console.log('DB FIND: ', query);
+		
 		if(typeof(query) == "object"){
 			query = JSON.stringify(query);
 		};
@@ -276,7 +290,7 @@ app.database = (function(){
 		}).success(function(data) {
 				response = data;
 				callback(data);
-				//console.log(data);
+				console.log(data);
 		});
 
 
@@ -292,8 +306,8 @@ app.database = (function(){
 		$.ajax({
 			type: "GET",
 			dataType: 'json',
-			//url: baseurl + 'user/' + query,
-			url: baseurl + 'user/{"date_start" : "2014-04-10T17:26:36.174Z", "today" : "2014-04-21T17:26:36.175Z", "geoNabe" : "Union Square"}',
+			url: baseurl + 'user/' + query,
+			
 		}).success(function(data) {
 				callback(data);
 				//console.log('done');
@@ -304,7 +318,7 @@ app.database = (function(){
 	
 	//find content in article colletion for list of urls
 	var list = function(query, callback, errorcallback){
-
+			
 		if(typeof(query) == "object"){
 			query = JSON.stringify(query);
 		};
@@ -327,6 +341,8 @@ app.database = (function(){
 	//track in user collection.	
 	var track = function(query, callback, errorcallback){
 
+		console.log('DB TRACK: ', query);
+		
 		$.ajax({
 			url: baseurl + 'track/' + query,
 		}).success(function(data) {
@@ -441,7 +457,11 @@ app.nav = (function(){
 				break;
 				
 				case 'city':
-					call = '';
+					if(category() == "All"){
+						call =  '"city" : "NYC"';
+					}else{
+						call = ''
+					};
 				break;
 			};
 		
@@ -472,7 +492,6 @@ app.nav = (function(){
 	};
 	var time_call = function(){
 				
-		//var call = '{$gte: ISODate(\'' + time_start() + '\'), $lt: ISODate(\'' + time_today() + '\')}';
 		var call = '"date_start" : "' + time_start() + '", "today" : "' + time_today() + '"';
 		return call;
 		
@@ -486,11 +505,17 @@ app.nav = (function(){
 		app.events.publish('load:start', 'Getting articles.');
 		
 		if(category() == 'All'){
-			call = '{' + time_call() + ', ' + location_call() + '}';
+			if(location_call()){
+				call = '{' + time_call() + ', ' + location_call() + '}';
+			}else{
+				call = '{' + time_call() + '}';
+			};
+			console.log(call);
 			var callback = function(data){	getArticleURLs(data);	};
 			app.database.init('user', call, callback);
 		}else{
 			call = '{' + time_call() + ', "cat" : "' + category() + '"}';
+			console.log(call);
 			var callback = function(data){
 				app.nav.feed = '';
 				app.nav.feed = JSON.parse(data);
@@ -516,6 +541,7 @@ app.nav = (function(){
 			num_parsed ++ ;		
 			if(num_parsed == num_results){
 				app.events.publish('nav:urls:ready', 'All article URLS pulled from user return.');
+				console.log(articleURLs);
 			};
 
 		});		
@@ -534,18 +560,23 @@ app.nav = (function(){
 			app.nav.feed = JSON.parse(data);
 			app.events.publish('nav:content:done', 'The Most Read Article array is ready.')
 		};
+
+		
 		articleURLs.forEach(function(el, arr, index){
 			
-			el = el.replace(/\//g, '^');
-			var url = {"storyURL" : el};	
-			urlList.push(url);
+			if(el.length > 2){
+				el = el.replace(/\//g, '^').replace(/\?/g, '`');
+				var url = {"storyURL" : el};	
+				urlList.push(url);
+			};
 			
 			num_pushed ++ ;		
 			if(num_pushed == num_results){
-				urlList = JSON.stringify(urlList);
-				app.database.init('list', urlList, callback);
+				var query = {"list" : urlList};
+				query = JSON.stringify(query);
+				app.database.init('list', query, callback);
 			};
-
+			
 		});
 
 		
@@ -584,7 +615,7 @@ app.nav = (function(){
 			
 			//if location changes, call db
 			$('select#locationType').change(function(){ 
-				app.events.publish('feed:refresh', 'The lcoation was changed.');
+				app.events.publish('feed:refresh', 'The location was changed.');
 			});
 			
 			//if timerange changes, call db
@@ -699,7 +730,9 @@ app.content = (function(){
 			renderFeed;
 	
 		template = $('.newsfeed-template').text();
-		feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
+		//feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
+		feedSrc = app.nav.feed;
+		console.log(feedSrc);
 		renderFeed = _.template(template);		
 		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
 		app.events.publish('feed:loaded', 'The newsfeed is done loading.');
@@ -980,8 +1013,6 @@ app.twitterfeed = (function(){
 	
 })();
 
-
-
 //--blur manager
 app.blur = (function(){
 	
@@ -1025,7 +1056,7 @@ app.blur = (function(){
 	};
 })();
 
-//loading indicator
+//--loading indicator
 app.loading = (function(){
 
 	var show = function(){
