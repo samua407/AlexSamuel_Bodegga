@@ -176,7 +176,7 @@ app.user = (function(){
 		var pullName = function(element, index, array){
 			namePullCount++;
 			
-			if(element.name){
+			if(element && element.name){
 				var v = {"name": element.name, "type" : element.categories[0].name};
 				initialList.push(v);
 				
