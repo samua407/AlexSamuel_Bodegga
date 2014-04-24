@@ -24,6 +24,15 @@
 		<% }); %>
 	</script>
 	
+	<script type="text/template" class="twitterfeed-template">
+		<% _.each(tweets, function(tweet){   %>
+		<li class = "tweet">
+			<h2><a href="<%= tweet.namelink %>" target="_blank"><%= tweet.name %></a></h2>
+			<h1><a href="<%= tweet.tweetlink %>" target="_blank"><%= tweet.tweet %></a></h1>
+		</li>
+		<% }); %>
+	</script>
+	
 	<script type="text/template" class="reader-template">
 		<div class="readerclose">x</div>
 		<div class="readerhead">

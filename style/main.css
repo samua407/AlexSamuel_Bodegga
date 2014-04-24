@@ -550,7 +550,7 @@ input:focus {
 }
 
 .newsWrapper{
-	visibility: hidden;
+	display: none;
 }
 
 .newsWrapper-active{

@@ -37,7 +37,8 @@ app.track = (function(){
 	
 	var submit = function(){
 		var query = JSON.stringify(obj);
-		app.database.init('track', query);
+		//app.database.init('track', query);
+		console.log('TRACKING COMMENTED OUT');
 	};
 	
 	var subscribe = function(){
@@ -659,6 +660,7 @@ app.nav = (function(){
 		
 })();
 
+//--search manager
 app.search = (function(){
 	
 	//--'enter' listeners
@@ -755,45 +757,51 @@ app.content = (function(){
 	};
 		
 	//feed listeners
+	var feed_listenON = false;
 	var feed_listen = function(){
 	
-		$('#articleList li').click(function(e){
-			e.preventDefault();
-			var url = e.currentTarget.childNodes[1].children[0].href;
-			reader_clear();
-			reader_render(url);
-		});	
-		$('#sidebar-hide').click(function(e){
-		  	$('.readersidebar').toggleClass('readersidebar-hide');
-		  	$('#sidebar-show').toggle();
-		  	$('#sidebar-hide').toggle();
-		  	$('.reader').toggleClass('reader-wide');
-		});
-		$('#sidebar-show').click(function(e){
-		  	$('.readersidebar').toggleClass('readersidebar-hide');
-		  	$('#sidebar-show').toggle();
-		  	$('#sidebar-hide').toggle();
-		  	$('.reader').toggleClass('reader-wide');
-		});
-		var showtwitter = function(){
-			$('#showtwitter').one('click', function(e){
-				console.log('show twitterfeed');
-				$(this).attr('id', 'showtwitter-active');
-				$('#shownews-active').attr('id', 'shownews');
-				shownews();
+		if(feed_listenON == false){
+			feed_listenON = true;
+			$('#articleList li').click(function(e){
+				e.preventDefault();
+				var url = e.currentTarget.childNodes[1].children[0].href;
+				reader_clear();
+				reader_render(url);
+			});	
+			$('#sidebar-hide').click(function(e){
+			  	$('.readersidebar').toggleClass('readersidebar-hide');
+			  	$('#sidebar-show').toggle();
+			  	$('#sidebar-hide').toggle();
+			  	$('.reader').toggleClass('reader-wide');
 			});
-		};
-		var shownews = function(){			
+			$('#sidebar-show').click(function(e){
+			  	$('.readersidebar').toggleClass('readersidebar-hide');
+			  	$('#sidebar-show').toggle();
+			  	$('#sidebar-hide').toggle();
+			  	$('.reader').toggleClass('reader-wide');
+			});
+			var showtwitter = function(){
+				$('#showtwitter').one('click', function(e){
+					$(this).attr('id', 'showtwitter-active');
+					$('#shownews-active').attr('id', 'shownews');
+					$('.twitterWrapper').attr('class', 'twitterWrapper-active');
+					$('.newsWrapper-active').attr('class', 'newsWrapper');
+					shownews();
+				});
+			};
+			
+			var shownews = function(){			
 			$('#shownews').one('click', function(e){
-				console.log('show newsfeed');
 				$(this).attr('id', 'shownews-active');
 				$('#showtwitter-active').attr('id', 'showtwitter');
+				$('.newsWrapper').attr('class', 'newsWrapper-active');
+				$('.twitterWrapper-active').attr('class', 'twitterWrapper');
 				showtwitter();
 				
 			});		
 		};
-		showtwitter();
-		
+			showtwitter();
+		};
 	};
 	
 	
@@ -949,81 +957,73 @@ app.twitterfeed = (function(){
 	};
 	
 	var call = function(){
-		console.log('call...');
-		var url = $('.tags h2 a')[0].href;
+		
+//		var url = $('.tags h2 a')[0].href;
+		var url = 'http://www.reuters.com/article/2014/04/21/us-usa-fed-unemployment-idUSBREA3K0V020140421';
 		url = 'lib/soc/twitter_roll.php?q=' + url;
-
+		
 		$.ajax({
 				url: url
 			}).success(function(data) {
 				parse(data);			
 			}).error(function(data){				
-				errorMsg();
+				console.log(data);
 			});
+
 			
 	};
 	
+	//parse tweet
 	var parse = function(d){
-		var arr = JSON.parse(d);
-		var num = arr.length;
-		var i;
+		var arr = JSON.parse(d),
+			num = arr.length,
+			count = 0,
+			tweetObj = [],
+			i;
 		
-		for(i = 0; i<num; i++){
-			if(arr[i]){
-				var name = arr[i].user.screen_name;
-				if(name.length > 1){
-					var namelink = 'https://twitter.com/'+name;
-					var tweet = arr[i].text;
-					var tweetlink = 'https://twitter.com/'+name+'/status/'+arr[i].id_str;
-					build(name, namelink, tweet, tweetlink);
+		if(num > 0){
+			for(i = 0; i<num; i++){
+				if(arr[i]){
+					var name = arr[i].user.screen_name;
+					if(name.length > 1){
+						var namelink = 'https://twitter.com/'+name;
+						var tweet = arr[i].text;
+						var tweetlink = 'https://twitter.com/'+name+'/status/'+arr[i].id_str;
+						var thisTweet = {'name' : name, 'namelink' : namelink, 'tweet' : tweet, 'tweetlink' : tweetlink};
+						tweetObj.push(thisTweet);
+						count++;
+						if(count == num){
+							build(tweetObj);
+						};
+					};
 				};
 			};
+		}else{
+			var thisTweet = {'name' : 'No Results', 'namelink' : '#', 'tweet' : 'Looks like nobody has tweeted about this yet!', 'tweetlink' : '#'};
+			tweetObj.push(thisTweet);
+			build(tweetObj);
 		};
 		
 	};
 	
-	var errorMsg = function(){
+	//build twitterfeed
+	var build = function(tweetSrc){
+		$('#tweetList').empty();
+		var	template,
+			feedSrc,
+			renderFeed;
 	
-		var template = $('.twitterFeed li.template');
-		var errorMsg = template.clone();
-		errorMsg.removeClass('template').addClass('tweet_error');
-		var msg = document.createElement('p');
-		msg.innerHTML = "No one has Tweeted about this. Start the conversation!";
-		errorMsg.append(msg);
-		$('.twitterFeed ul').append(errorMsg);
-		
-
-	};
-	
-	var build = function(name, namelink, tweet, tweetlink){
-		//build newsfeed block
-		var template = $('.twitterFeed li.template');
-		var feedBlock = template.clone();
-		feedBlock.removeClass('template').addClass('tweet');
-		
-		//feedBlock.find('name').text(name).text();
-		var name_link = document.createElement('a');
-		var name_link_name = document.createTextNode('@' + name);
-		name_link.appendChild(name_link_name);
-		name_link.href = namelink;
-		name_link.target = "_blank";
-		feedBlock.find('h2').append(name_link);
-		
-		var tweet_link = document.createElement('a');
-		var tweet_link_text = document.createTextNode(tweet);
-		tweet_link.appendChild(tweet_link_text);
-		tweet_link.href = tweetlink;
-		tweet_link.target = "_blank";
-		feedBlock.find('h1').append(tweet_link);
- 	
-		$('.twitterFeed ul').append(feedBlock);
+		template = $('.twitterfeed-template').text();
+		feedSrc = tweetSrc;
+		renderFeed = _.template(template);		
+		$(renderFeed({tweets : feedSrc })).appendTo('#tweetList');	
+		app.events.publish('tweed:loaded', 'The twitterfeed is done loading.');		
 		
 	};
 	
 	return {
 		init: init
 	};
-	
 	
 })();
 
@@ -1100,7 +1100,7 @@ app.init = (function(){
 	app.nav.init();
 	app.search.init();
 	app.content.init();
-	//app.twitterfeed.init();
+	app.twitterfeed.init();
 	app.loading.init();
 	app.blur.init();
 })();
