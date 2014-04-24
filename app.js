@@ -218,7 +218,7 @@ app.user = (function(){
 				app.user.name = selected[0].text.replace("'", "");
 				app.user.type = selected[0].value;
 				
-				var publishLoc = 'Locaiton is ' + app.user.name + ', which is a ' + app.user.type;
+				var publishLoc = 'Location is ' + app.user.name + ', which is a ' + app.user.type;
 				app.events.publish('location:selected', publishLoc);
 				
 				track();
@@ -275,8 +275,6 @@ app.database = (function(){
 
 	//find in article collection
 	var find = function(query, callback, errorcallback){
-
-		console.log('DB FIND: ', query);
 		
 		if(typeof(query) == "object"){
 			query = JSON.stringify(query);
@@ -288,9 +286,14 @@ app.database = (function(){
 			dataType: 'json',
 			url: baseurl + 'find/' + query,
 		}).success(function(data) {
+			if(data.status == 204){
+				app.events.publish('feed:no_results', data.msg);
+				app.events.publish('load:stop', '');
+			}else{
 				response = data;
 				callback(data);
-				console.log(data);
+				//console.log(data);
+			};
 		});
 
 
@@ -309,9 +312,15 @@ app.database = (function(){
 			url: baseurl + 'user/' + query,
 			
 		}).success(function(data) {
+			if(data.status == 204){
+				console.log(data.msg);
+				app.events.publish('feed:no_results', data.msg);
+				app.events.publish('load:stop', '');
+			}else{
 				callback(data);
 				//console.log('done');
 				//console.log(data);
+			};
 		});
 			
 	};
@@ -329,9 +338,15 @@ app.database = (function(){
 			dataType: 'json',
 			url: baseurl + 'list/' + query,
 		}).success(function(data) {
+			if(data.status == 204){
+				console.log(data.msg);
+				app.events.publish('feed:no_results', data.msg);
+				app.events.publish('load:stop', '');
+			}else{
 				response = data;
 				callback(data);
 				//console.log(data);
+			};
 		});
 
 
@@ -340,8 +355,6 @@ app.database = (function(){
 	
 	//track in user collection.	
 	var track = function(query, callback, errorcallback){
-
-		console.log('DB TRACK: ', query);
 		
 		$.ajax({
 			url: baseurl + 'track/' + query,
@@ -510,12 +523,10 @@ app.nav = (function(){
 			}else{
 				call = '{' + time_call() + '}';
 			};
-			console.log(call);
 			var callback = function(data){	getArticleURLs(data);	};
 			app.database.init('user', call, callback);
 		}else{
 			call = '{' + time_call() + ', "cat" : "' + category() + '"}';
-			console.log(call);
 			var callback = function(data){
 				app.nav.feed = '';
 				app.nav.feed = JSON.parse(data);
@@ -541,7 +552,6 @@ app.nav = (function(){
 			num_parsed ++ ;		
 			if(num_parsed == num_results){
 				app.events.publish('nav:urls:ready', 'All article URLS pulled from user return.');
-				console.log(articleURLs);
 			};
 
 		});		
@@ -730,17 +740,20 @@ app.content = (function(){
 			renderFeed;
 	
 		template = $('.newsfeed-template').text();
-		//feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
 		feedSrc = app.nav.feed;
-		console.log(feedSrc);
 		renderFeed = _.template(template);		
 		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
 		app.events.publish('feed:loaded', 'The newsfeed is done loading.');
 		app.events.publish('load:stop', '');
-
 		
 	};
+
+	//render no results
+	var feed_noResults = function(){
+		console.log('no results');
 	
+	};
+		
 	//feed listeners
 	var feed_listen = function(){
 	
@@ -900,7 +913,8 @@ app.content = (function(){
 	//subscriptions
 	var subscriptions = function(){
 		app.events.subscribe('nav:content:done', build);
-		app.events.subscribe('feed:loaded', feed_listen)
+		app.events.subscribe('feed:loaded', feed_listen);
+		app.events.subscribe('feed:no_results', feed_noResults);
 		app.events.subscribe('reader:loaded', reader_listen);
 		app.events.subscribe('reader:hide', reader_close);
 		app.events.subscribe('reader:show', reader_open);
@@ -1079,7 +1093,6 @@ app.loading = (function(){
 	}
 	
 })();
-
 
 //--init
 app.init = (function(){
