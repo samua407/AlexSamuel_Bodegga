@@ -914,6 +914,7 @@ app.content = (function(){
 	
 		});
 		
+		
 	};
 	
 	
@@ -1027,8 +1028,24 @@ app.twitterfeed = (function(){
 	
 })();
 
+
 //--social managers
-app.social = {};
+app.social = (function(){
+	
+	var init = function(){
+		app.events.subscribe('reader:loaded', listeners);
+	};
+	
+	var listeners = function(){
+		app.social.twitter.init();
+		//app.events.subscribe('social:copy', app.social.copy.init);
+		app.social.copy.init();	
+	};
+	
+	return {
+		init: init
+	}
+})();
 
 //--twitter 
 app.social.twitter = (function(){
@@ -1039,9 +1056,7 @@ app.social.twitter = (function(){
 		
 	};
 	
-	
 	var loadTweet = function(){
-		console.log('loadTweet');
 		var url,
 			hed,
 			link;
@@ -1050,7 +1065,6 @@ app.social.twitter = (function(){
 		url = $(url).attr('href');
 		hed = $('.readerhead h1').text();
 		link = 'lib/soc/oauth/tweetPopup.php?l=' + url + "&t=" + hed;
-		console.log(link);
 		window.open(link,"_blank","toolbar=no, scrollbars=no, resizable=no, top=300, left=500, width=400, height=150");			
 	};
 	
@@ -1071,7 +1085,6 @@ app.social.twitter = (function(){
 			charCount();
 		});
 	};
-	
 	
 	var charCount = function(){
 		
@@ -1104,6 +1117,32 @@ app.social.twitter = (function(){
 	
 	
 })();
+
+app.social.copy = (function(){
+	
+	var init = function(){
+		console.log('!');
+		var url = $('.tags h2').html();
+		url = $(url).attr('href');
+		
+		ZeroClipboard.config( { moviePath: 'bower_components/zeroclipboard/ZeroClipboard.swf' } );
+		
+		var client = new ZeroClipboard($("#copy"));
+		
+		client.on( 'dataRequested', function (client, args) {
+			$('#copy').fadeTo('slow', 0.5).fadeTo('slow', 1.0).fadeTo('slow', 0.5).fadeTo('slow', 1.0);
+			client.setText( url );
+		});
+			
+	};
+
+
+	return {
+		init : init
+	}
+	
+})();
+
 
 //--blur manager
 app.blur = (function(){
@@ -1181,6 +1220,7 @@ app.init = (function(){
 		app.search.init();
 		app.content.init();
 		app.twitterfeed.init();
+		app.social.init();
 		app.loading.init();
 		app.blur.init();
 	};
@@ -1190,3 +1230,9 @@ app.init = (function(){
 	};
 	
 })();
+
+
+
+
+
+
