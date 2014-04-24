@@ -5,15 +5,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-<link rel="stylesheet" href="/_d/style/twpop.css">
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-<script src="/_d/js/socObj.js"></script>
-	<script>
-	$( document ).ready(function() {
-	    twitter.init();
-	});
-	</script>
+<link rel="stylesheet" href="/_dev/style/twpop.css">
+
+
 
 	<title>Tweet This Article</title>
 
@@ -30,6 +24,14 @@
 	</div>
 -->
 
-	
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+	<script src="/_dev/app.js"></script>
+	<script>
+	$( document ).ready(function() {
+	   app.social.twitter.init_popup();
+	});
+	</script>
+
 </body>
 </html>

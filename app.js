@@ -891,7 +891,7 @@ app.content = (function(){
 		$('#twitter').click(function(){
 			app.track.obj.articleClick.tweet = true;	
 			app.events.publish('track:updated', 'Obj.articleClick updated');
-			app.events.publish('social:twitter', 'Clicked Twitter Share.');
+			app.events.publish('social:twitter', 'Clicked Twitter Share.');					
 		});
 		
 		$('#instapaper').click(function(){
@@ -1027,6 +1027,84 @@ app.twitterfeed = (function(){
 	
 })();
 
+//--social managers
+app.social = {};
+
+//--twitter 
+app.social.twitter = (function(){
+	
+	var init = function(){
+		
+		app.events.subscribe('social:twitter', loadTweet);
+		
+	};
+	
+	
+	var loadTweet = function(){
+		console.log('loadTweet');
+		var url,
+			hed,
+			link;
+		
+		url = $('.tags h2').html();
+		url = $(url).attr('href');
+		hed = $('.readerhead h1').text();
+		link = 'lib/soc/oauth/tweetPopup.php?l=' + url + "&t=" + hed;
+		console.log(link);
+		window.open(link,"_blank","toolbar=no, scrollbars=no, resizable=no, top=300, left=500, width=400, height=150");			
+	};
+	
+	var init_popup = function(){	
+		console.log('hello');
+		listeners();
+		charCount();
+	};	
+	
+	var listeners = function (){
+
+		$('.postTweet button').click(function(){
+			console.log('click');
+			post();
+		});
+		
+		$('#writeTweet').keyup(function () {
+			charCount();
+		});
+	};
+	
+	
+	var charCount = function(){
+		
+			var max = 137;
+			var len = $('#writeTweet').val().length;
+			
+			if (len >= max) {
+				var over = max - len;
+				$('#charCount').text("too long");
+			} else{
+				var char = max - len;
+				$('#charCount').text(char);
+			}
+			
+	};
+	
+	var post = function(){
+	
+		var tweet =	$('#writeTweet').val();	
+		var link = "http://54.221.155.222/_d/lib/soc/oauth/redirect.php?tweet=" + tweet;
+		window.open(link,"_self")
+			
+	};	
+	
+	return {
+		init : init,
+		init_popup : init_popup,
+		post : post
+	};
+	
+	
+})();
+
 //--blur manager
 app.blur = (function(){
 	
@@ -1096,11 +1174,19 @@ app.loading = (function(){
 
 //--init
 app.init = (function(){
-	app.user.init();
-	app.nav.init();
-	app.search.init();
-	app.content.init();
-	app.twitterfeed.init();
-	app.loading.init();
-	app.blur.init();
+
+	var home = function(){
+		app.user.init();
+		app.nav.init();
+		app.search.init();
+		app.content.init();
+		app.twitterfeed.init();
+		app.loading.init();
+		app.blur.init();
+	};
+	
+	return {
+		home : home
+	};
+	
 })();
