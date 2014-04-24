@@ -1028,7 +1028,6 @@ app.twitterfeed = (function(){
 	
 })();
 
-
 //--social managers
 app.social = (function(){
 	
@@ -1040,6 +1039,7 @@ app.social = (function(){
 		app.social.twitter.init();
 		//app.events.subscribe('social:copy', app.social.copy.init);
 		app.social.copy.init();	
+		app.social.mail.init();
 	};
 	
 	return {
@@ -1121,7 +1121,6 @@ app.social.twitter = (function(){
 app.social.copy = (function(){
 	
 	var init = function(){
-		console.log('!');
 		var url = $('.tags h2').html();
 		url = $(url).attr('href');
 		
@@ -1140,6 +1139,46 @@ app.social.copy = (function(){
 	return {
 		init : init
 	}
+	
+})();
+
+app.social.mail = (function(){
+	
+	var init = function(){
+		app.events.subscribe('social:mail', send);
+		
+	};
+	
+	var send = function(){
+
+		var pub,
+			url,
+			title,
+			subj,
+			body,
+			link;
+			
+		title = $('.readerhead h1').text();
+		url = $('.tags h2').html();
+		url = $(url).attr('href');
+		pub = 'Reuters';
+		subj = "Spotted On [Bodeg.ga]: " + title;
+		body = "I thought you'd be interested in this article from " + pub + ": " + url;
+
+	    link = 'mailto:?subject='
+                             + encodeURIComponent(subj)
+                             + "&body=" 
+                             + encodeURIComponent(body);
+             
+	    window.location.href = link;
+		
+	};
+	
+	
+	return {
+		init : init
+	};
+	
 	
 })();
 
