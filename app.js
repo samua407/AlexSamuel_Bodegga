@@ -419,8 +419,26 @@ app.nav = (function(){
 		
 	//check to see if nav bar was built
 	var readyCheck = function(){
-		var loc = $('select#locationType').find('option:selected').val();
-		var place = $('select#locationType').find('#here').val();
+		var loc,
+			place,
+			txt,
+			newWidth;
+		
+		loc = $('select#locationType').find('option:selected').val();
+		place = $('select#locationType').find('#here').val();
+
+		//resize divs
+		txt = $('select#newsType').find('option:selected').text();
+		newWidth = ruler(txt);
+		$('#newsType').width(newWidth);
+
+		txt = $('select#locationType').find('option:selected').text();
+		newWidth = ruler(txt);
+		$('#locationType').width(newWidth);
+
+		txt = $('select#timeType').find('option:selected').text();
+		newWidth = ruler(txt);
+		$('#timeType').width(newWidth);		
 
 		//check to see that user's data loaded into drop downs
 		if(loc != 'nabe'){
@@ -646,6 +664,10 @@ app.nav = (function(){
 					app.events.publish('nav:category', 'nav is set to a category');
 				};
 				
+				var txt = $('select#newsType').find('option:selected').text();
+				var newWidth = ruler(txt);
+				$('#newsType').width(newWidth);
+				
 				app.events.publish('feed:refresh', 'The category was changed.');
 	
 			});
@@ -661,11 +683,21 @@ app.nav = (function(){
 			
 			//if location changes, call db
 			$('select#locationType').change(function(){ 
+
+				var txt = $('select#locationType').find('option:selected').text();
+				var newWidth = ruler(txt);
+				$('#locationType').width(newWidth);
+				
 				app.events.publish('feed:refresh', 'The location was changed.');
 			});
 			
 			//if timerange changes, call db
 			$('select#timeType').change(function(){ 
+			
+				var txt = $('select#timeType').find('option:selected').text();
+				var newWidth = ruler(txt);
+				$('#timeType').width(newWidth);
+				
 				app.events.publish('feed:refresh', 'The time range was changed.');
 			});
 	
@@ -686,11 +718,18 @@ app.nav = (function(){
 		listeners();
 	};
 	
+	var ruler = function(txt){
+		
+		var px = $('#ruler').text(txt).width() + 2;
+		return px
+		
+	};
+	
+	
 	return {
 		
 		init : init,
-		feed : feed
-		
+		feed : feed		
 	}
 		
 })();
@@ -1586,9 +1625,6 @@ app.init = (function(){
 	};
 	
 })();
-
-
-
 
 
 
