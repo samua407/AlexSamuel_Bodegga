@@ -549,12 +549,14 @@ app.nav = (function(){
 		var num_parsed = 0;
 		
 		data.forEach(function(el, arr, index){		
-			var url = el.articleClick.url;		
-			articleURLs.push(url);
-
+			var url = el.articleClick.url;	
+			if(url.length > 0){	
+				articleURLs.push(url);
+			};
 			num_parsed ++ ;		
 			if(num_parsed == num_results){
-				app.events.publish('nav:urls:ready', 'All article URLS pulled from user return.');
+				sort(articleURLs);
+				
 			};
 
 		});		
@@ -562,6 +564,37 @@ app.nav = (function(){
 	};
 	
 
+	var sort = function(array){
+		
+		//sort list of heds by frequency
+		var sorted_results_map = {};
+
+		var i;
+		var num = array.length	
+		for(i=0; i<num; i++){
+			var key = array[i];
+			sorted_results_map[key] = (sorted_results_map[key] || 0) + 1;
+		};
+				
+		//push sorted list of heds to new array
+		var sorted_results = [];
+		for(key in sorted_results_map) sorted_results.push({
+			key: key, 
+			freq: sorted_results_map[key],
+		});
+		
+		sorted_results.sort(function(a,b){return b.freq - a.freq});
+		
+		//clear articleURL + push sorted list
+		articleURLs = [];	
+		sorted_results.forEach(function(elem){
+			articleURLs.push(elem.key)		
+		});
+		
+		app.events.publish('nav:urls:ready', 'All article URLS pulled from user return.');
+		
+	};
+	
 	//--get story content from articleURLs
 	var getArticleContent = function(){
 				
@@ -662,99 +695,6 @@ app.nav = (function(){
 		
 })();
 
-//--search manager
-app.search = (function(){
-	
-	var feed = [];
-	
-	//--'enter' listeners
-	var listen = function(){
-		//listen for "enter" on search val + call search
-		$("#searchval").keypress(function(e){
-			if (e.which == 13){
-				var searchval = $('#searchval').val();
-				call(searchval);
-				app.events.publish('load:start', 'Started search for', searchval);
-			}
-		});
-
-		//listen for search done + call parse
-		app.events.subscribe('search:content:done', parse);
-		
-	};
-	
-	//--call database
-	var call = function(query){
-	
-		query = '{"keywords":"' + query + '"}'
-		console.log(query);
-		var callback = function(data){
-			app.search.feed = '';
-			app.search.feed = JSON.parse(data);		
-			app.events.publish('search:content:done', 'Search array is ready.');
-		};
-		app.database.init('find', query, callback);
-		
-	};
-	
-	//--call from keyword
-	var callFromKeyword = function(query){
-		console.log('keyword clicked is', query);	
-		app.events.subscribe('search:content:done', parse);
-		query = '{"keywords":"' + query + '"}'
-		var callback = function(data){
-			app.search.feed = '';
-			app.search.feed = JSON.parse(data);		
-			app.events.publish('search:content:done', 'The results array for the search about ' + $('#searchval').val() + ' is ready.');
-		};
-		
-		app.database.init('find', query, callback);
-			
-	};
-	
-	//--parse results
-	var parse = function(){
-		var	template,
-		feedSrc,
-		renderFeed;
-		$('#searchList').empty();
-		
-		if(app.search.feed.length > 0){
-			template = $('.newsfeed-template').text();
-			feedSrc = app.search.feed;
-			renderFeed = _.template(template);		
-			$(renderFeed({articles : feedSrc })).appendTo('#searchList');	
-			app.events.publish('feed:loaded', 'The search results are done loading.');
-			app.events.publish('load:stop', '');
-		}else{
-			template = $('.noresults-template').text();
-			var msg = "Sorry. Your search for " + $('#searchval').val() + " came up empty."
-			feedSrc = {"body":msg};
-			renderFeed = _.template(template);		
-			$(renderFeed({msg : feedSrc })).appendTo('#searchList');	
-			app.events.publish('feed:loaded', 'The search results are done loading.');
-			app.events.publish('load:stop', '');
-		}
-	};
-		
-	//--init listeners
-	var init = function(){
-		
-		$('#searchbar').click(function(){
-			listen();
-			$('#searchval').val('');
-		});
-
-		
-	};
-	
-	return {
-		init : init,
-		call : callFromKeyword
-	}
-	
-})();
-
 //--newsfeed + article manager
 app.content = (function(){
 	
@@ -776,13 +716,22 @@ app.content = (function(){
 		var	template,
 			feedSrc,
 			renderFeed;
-	
-		template = $('.newsfeed-template').text();
 		feedSrc = app.nav.feed;
-		renderFeed = _.template(template);		
-		$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
-		app.events.publish('feed:loaded', 'The newsfeed is done loading.');
-		app.events.publish('load:stop', '');
+		
+		if(feedSrc.length > 0){
+			template = $('.newsfeed-template').text();
+			renderFeed = _.template(template);		
+			$(renderFeed({articles : feedSrc })).appendTo('#articleList');	
+			app.events.publish('feed:loaded', 'The newsfeed is done loading.');
+			app.events.publish('load:stop', '');
+		}else{
+			body = {"body" : "Well this is embarassing. It seems no one has checked in from " +  $('select#locationType').find('option:selected').val() + " in the last " +$('select#timeType').find('option:selected').val() + ". Try a broader search or browse by topic."}
+			template = $('.noresults-template').text();
+			renderFeed = _.template(template);		
+			$(renderFeed({msg : body })).appendTo('#articleList');	
+			app.events.publish('feed:loaded', 'The newsfeed is done loading.');
+			app.events.publish('load:stop', '');	
+		}
 		
 	};
 
@@ -1094,6 +1043,111 @@ app.twitterfeed = (function(){
 	return {
 		init: init
 	};
+	
+})();
+
+//--search manager
+app.search = (function(){
+	
+	var feed = [];
+	
+	//--'enter' listeners
+	var listen = function(){
+		//listen for "enter" on search val + call search
+		$("#searchval").keypress(function(e){
+			if (e.which == 13){
+				var searchval = $('#searchval').val();
+				call(searchval);
+				app.events.publish('load:start', 'Started search for', searchval);
+			}
+		});
+
+		//listen for search done + call parse
+		app.events.subscribe('search:content:done', parse);
+		
+	};
+	
+	var cleanterm = function(term){
+		
+		var newTerm = term.replace(/[?!.]/, '').replace(/&/g, 'and');
+	
+		return newTerm;
+	};
+	
+	//--call database
+	var call = function(term){
+	
+		var query = cleanterm(term);
+		query = '{"keywords":"' + query + '"}'
+		
+		var callback = function(data){
+			app.search.feed = '';
+			app.search.feed = JSON.parse(data);		
+			app.events.publish('search:content:done', 'Search array is ready.');
+		};
+		app.database.init('find', query, callback);
+		
+	};
+	
+	//--call from keyword
+	var callFromKeyword = function(term){
+
+		var query = cleanterm(term);
+		query = '{"keywords":"' + query + '"}'
+		
+		
+		app.events.subscribe('search:content:done', parse);
+		
+		var callback = function(data){
+			app.search.feed = '';
+			app.search.feed = JSON.parse(data);		
+			app.events.publish('search:content:done', 'The results array for the search about ' + $('#searchval').val() + ' is ready.');
+		};
+		
+		app.database.init('find', query, callback);
+			
+	};
+	
+	//--parse results
+	var parse = function(){
+		var	template,
+		feedSrc,
+		renderFeed;
+		$('#searchList').empty();
+		
+		if(app.search.feed.length > 0){
+			template = $('.newsfeed-template').text();
+			feedSrc = app.search.feed;
+			renderFeed = _.template(template);		
+			$(renderFeed({articles : feedSrc })).appendTo('#searchList');	
+			app.events.publish('feed:loaded', 'The search results are done loading.');
+			app.events.publish('load:stop', '');
+		}else{
+			template = $('.noresults-template').text();
+			var msg = "Sorry. Your search for " + $('#searchval').val() + " came up empty."
+			feedSrc = {"body":msg};
+			renderFeed = _.template(template);		
+			$(renderFeed({msg : feedSrc })).appendTo('#searchList');	
+			app.events.publish('feed:loaded', 'The search results are done loading.');
+			app.events.publish('load:stop', '');
+		}
+	};
+		
+	//--init listeners
+	var init = function(){
+		
+		$('#searchbar').click(function(){
+			listen();
+			$('#searchval').val('');
+		});
+
+		
+	};
+	
+	return {
+		init : init,
+		call : callFromKeyword
+	}
 	
 })();
 

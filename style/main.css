@@ -597,6 +597,13 @@ opacity: 0;
 	clear: both;
 }
 
+.newsFeed li h4 {/* no results */
+	margin: 5px;
+	font: 13px "Lucida Grande", Lucida, Verdana, sans-serif;
+	color:  #dddddf;
+	text-transform: none;
+}
+
 .twitterWrapper{
 	display: none;
 }
@@ -659,7 +666,7 @@ opacity: 0;
 	margin: 5px;
 	font: 13px "Lucida Grande", Lucida, Verdana, sans-serif;
 	color:  #dddddf;
-	text-transform: capitalize;
+	text-transform: none;
 }
 
 .searchWrapper{
@@ -747,10 +754,11 @@ input:focus {
 
 
 #searchList li h4 {/* no results */
+	margin: 5px;
 	font: 13px "Lucida Grande", Lucida, Verdana, sans-serif;
 	color:  #dddddf;
-	text-transform: capitalize;
-	margin: 5px;
+	text-transform: none;
+
 };
 
 
