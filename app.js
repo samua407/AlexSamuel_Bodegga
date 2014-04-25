@@ -288,13 +288,15 @@ app.database = (function(){
 			url: baseurl + 'find/' + query,
 		}).success(function(data) {
 			if(data.status == 204){
-				app.events.publish('feed:no_results', data.msg);
 				app.events.publish('load:stop', '');
-			}else{
-				response = data;
-				callback(data);
-				//console.log(data);
-			};
+				//data = [{"cat" : "No Results", "storyURL" : "#", "hed" : "Sorry, no articles match your query."}];
+				data = [];
+				data = JSON.stringify(data);
+				
+			}
+			response = data;
+			callback(data);
+			
 		});
 
 
@@ -663,23 +665,22 @@ app.nav = (function(){
 //--search manager
 app.search = (function(){
 	
+	var feed = [];
+	
 	//--'enter' listeners
 	var listen = function(){
-		//listen for "enter" on searchf eed, then search
+		//listen for "enter" on search val + call search
 		$("#searchval").keypress(function(e){
 			if (e.which == 13){
 				var searchval = $('#searchval').val();
 				call(searchval);
-				$('#searchval').val('');
-				$('#loading_feed').fadeIn();
-				
+				app.events.publish('load:start', 'Started search for', searchval);
 			}
 		});
+
+		//listen for search done + call parse
+		app.events.subscribe('search:content:done', parse);
 		
-		//shrink search
-		$("#searchval").focusout(function(){
-			$('#searchbar').animate({width: '22px'});			
-		});
 	};
 	
 	//--call database
@@ -688,28 +689,47 @@ app.search = (function(){
 		query = '{"keywords":"' + query + '"}'
 		console.log(query);
 		var callback = function(data){
-			app.nav.feed = '';
-			app.nav.feed = JSON.parse(data);
-			app.events.publish('nav:content:done', 'Search array is ready.');
+			app.search.feed = '';
+			app.search.feed = JSON.parse(data);		
+			app.events.publish('search:content:done', 'Search array is ready.');
 		};
 		app.database.init('find', query, callback);
 		
 	};
 	
+	//--parse results
+	var parse = function(){
+		var	template,
+		feedSrc,
+		renderFeed;
+		$('#searchList').empty();
+		
+		if(app.search.feed.length > 0){
+			template = $('.newsfeed-template').text();
+			feedSrc = app.search.feed;
+			renderFeed = _.template(template);		
+			$(renderFeed({articles : feedSrc })).appendTo('#searchList');	
+			app.events.publish('feed:loaded', 'The search results are done loading.');
+			app.events.publish('load:stop', '');
+		}else{
+			template = $('.noresults-template').text();
+			var msg = "Sorry. Your search for " + $('#searchval').val() + " came up empty."
+			feedSrc = {"body":msg};
+			renderFeed = _.template(template);		
+			$(renderFeed({msg : feedSrc })).appendTo('#searchList');	
+			app.events.publish('feed:loaded', 'The search results are done loading.');
+			app.events.publish('load:stop', '');
+		}
+	};
+		
 	//--init listeners
 	var init = function(){
 		
 		$('#searchbar').click(function(){
 			listen();
-			$('#searchbar').focusout(function(){
-				$('#searchbar').animate({width: '22px'});
-				$('#searchval').val('');
-			});
+			$('#searchval').val('');
 		});
-		
-		$('#searchbar').hover(function(){
-			$('#searchbar').animate({width: '200px'});
-		});
+
 		
 	};
 	
@@ -750,24 +770,22 @@ app.content = (function(){
 		
 	};
 
-	//render no results
-	var feed_noResults = function(){
-		console.log('no results');
-	
-	};
-		
 	//feed listeners
 	var feed_listenON = false;
 	var feed_listen = function(){
 	
 		if(feed_listenON == false){
 			feed_listenON = true;
+			
+			//--article click listener
 			$('#articleList li').click(function(e){
 				e.preventDefault();
 				var url = e.currentTarget.childNodes[1].children[0].href;
 				reader_clear();
 				reader_render(url);
 			});	
+			
+			//--toggle sidebar visisiblity listeners
 			$('#sidebar-hide').click(function(e){
 			  	$('.readersidebar').toggleClass('readersidebar-hide');
 			  	$('#sidebar-show').toggle();
@@ -780,27 +798,55 @@ app.content = (function(){
 			  	$('#sidebar-hide').toggle();
 			  	$('.reader').toggleClass('reader-wide');
 			});
+			
+			//--show search listener
+			var showsearch = function(){
+				$('#showsearch').one('click', function(e){
+					$('#shownews-active').attr('id', 'shownews');
+					$('#showtwitter-active').attr('id', 'showtwitter');
+					$(this).attr('id', 'showsearch-active');
+					$('.newsWrapper-active').attr('class', 'newsWrapper');
+					$('.twitterWrapper-active').attr('class', 'twitterWrapper');
+					$('.searchWrapper').attr('class', 'searchWrapper-active');	
+					shownews();
+					showtwitter();			
+				});					
+			};
+			
+			//--show twitter listener
 			var showtwitter = function(){
 				$('#showtwitter').one('click', function(e){
-					$(this).attr('id', 'showtwitter-active');
 					$('#shownews-active').attr('id', 'shownews');
-					$('.twitterWrapper').attr('class', 'twitterWrapper-active');
+					$(this).attr('id', 'showtwitter-active');
+					$('#showsearch-active').attr('id', 'showsearch');
 					$('.newsWrapper-active').attr('class', 'newsWrapper');
+					$('.twitterWrapper').attr('class', 'twitterWrapper-active');
+					$('.searchWrapper-active').attr('class', 'searchWrapper');
+					
 					shownews();
+					showsearch();
 				});
 			};
 			
+			//--show news listener
 			var shownews = function(){			
-			$('#shownews').one('click', function(e){
-				$(this).attr('id', 'shownews-active');
-				$('#showtwitter-active').attr('id', 'showtwitter');
-				$('.newsWrapper').attr('class', 'newsWrapper-active');
-				$('.twitterWrapper-active').attr('class', 'twitterWrapper');
-				showtwitter();
-				
-			});		
-		};
+				$('#shownews').one('click', function(e){
+					$(this).attr('id', 'shownews-active');
+					$('#showtwitter-active').attr('id', 'showtwitter');
+					$('#showsearch-active').attr('id', 'showsearch');
+					$('.newsWrapper').attr('class', 'newsWrapper-active');
+					$('.twitterWrapper-active').attr('class', 'twitterWrapper');
+					$('.searchWrapper-active').attr('class', 'searchWrapper');
+	
+					showsearch();
+					showtwitter();
+					
+				});		
+			};
+			
+			//call twitter + search listeners
 			showtwitter();
+			showsearch();
 		};
 	};
 	
@@ -923,7 +969,6 @@ app.content = (function(){
 	var subscriptions = function(){
 		app.events.subscribe('nav:content:done', build);
 		app.events.subscribe('feed:loaded', feed_listen);
-		app.events.subscribe('feed:no_results', feed_noResults);
 		app.events.subscribe('reader:loaded', reader_listen);
 		app.events.subscribe('reader:hide', reader_close);
 		app.events.subscribe('reader:show', reader_open);
@@ -959,8 +1004,8 @@ app.twitterfeed = (function(){
 	
 	var call = function(){
 		
-//		var url = $('.tags h2 a')[0].href;
-		var url = 'http://www.reuters.com/article/2014/04/21/us-usa-fed-unemployment-idUSBREA3K0V020140421';
+		var url = $('.tags h2 a')[0].href;
+//		var url = 'http://www.reuters.com/article/2014/04/21/us-usa-fed-unemployment-idUSBREA3K0V020140421';
 		url = 'lib/soc/twitter_roll.php?q=' + url;
 		
 		$.ajax({
@@ -981,7 +1026,7 @@ app.twitterfeed = (function(){
 			count = 0,
 			tweetObj = [],
 			i;
-		
+
 		if(num > 0){
 			for(i = 0; i<num; i++){
 				if(arr[i]){
@@ -1000,11 +1045,10 @@ app.twitterfeed = (function(){
 				};
 			};
 		}else{
-			var thisTweet = {'name' : 'No Results', 'namelink' : '#', 'tweet' : 'Looks like nobody has tweeted about this yet!', 'tweetlink' : '#'};
-			tweetObj.push(thisTweet);
+			tweetObj = [];
 			build(tweetObj);
 		};
-		
+
 	};
 	
 	//build twitterfeed
@@ -1014,12 +1058,20 @@ app.twitterfeed = (function(){
 			feedSrc,
 			renderFeed;
 	
-		template = $('.twitterfeed-template').text();
 		feedSrc = tweetSrc;
-		renderFeed = _.template(template);		
-		$(renderFeed({tweets : feedSrc })).appendTo('#tweetList');	
-		app.events.publish('tweed:loaded', 'The twitterfeed is done loading.');		
 		
+		if(feedSrc.length > 0){
+			template = $('.twitterfeed-template').text();	
+			renderFeed = _.template(template);		
+			$(renderFeed({tweets : feedSrc })).appendTo('#tweetList');	
+			app.events.publish('tweed:loaded', 'The twitterfeed is done loading.');		
+		}else{
+ 			template = $('.noresults-template').text();
+ 			feedSrc = {"body" : "No one has tweeted this aritcle yet."};
+			renderFeed = _.template(template);		
+			$(renderFeed({msg : feedSrc })).appendTo('#tweetList');	
+			app.events.publish('tweed:loaded', 'The twitterfeed is done loading.');	
+		}
 	};
 	
 	return {

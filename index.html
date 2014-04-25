@@ -4,7 +4,7 @@
 <title>Bodeg.ga</title>
 
 <link rel="icon" type="image/x-icon" href="style/img/fav.ico" />
-<link rel="apple-touch-icon" href=“style/img/fav.ico" />
+<link rel="apple-touch-icon" href = "style/img/fav.ico" />
 <link rel="stylesheet" href="style/normalize.min.css">
 <link rel="stylesheet" href="style/main.css">
 <link rel="stylesheet" href="style/fonts/font-awesome/css/font-awesome.min.css">
@@ -31,6 +31,12 @@
 			<h1><a href="<%= tweet.tweetlink %>" target="_blank"><%= tweet.tweet %></a></h1>
 		</li>
 		<% }); %>
+	</script>
+	
+	<script type="text/template" class="noresults-template">
+		<li>
+			<h4><%= msg.body %></h4>
+		</li>
 	</script>
 	
 	<script type="text/template" class="reader-template">
@@ -80,6 +86,19 @@
 			<option value="school">School</option>
 			<option value="#"> </option>
 		</select>
+	</div>
+	<div class="social">
+		<div class="ip_login">
+			<div id="ip_login_close">x</div>
+			<p>Please log-in to Instapaper to save this article.</p>
+			<form class="ip_login_form">
+			  <label for="ip_login_name">Username:</label>
+			  <input id="ip_login_name" type="text" name="name"><br>
+			  <label for="ip_login_pass">Password:</label>
+			  <input id="ip_login_pass" type="password" name="pass"><br>
+			  <input type="submit" id="ip_login_submit">
+			</form>
+		</div>
 	</div>
 	<div id="blur"></div>
 		
@@ -137,7 +156,6 @@
 					</select>
 				</form>
 			<div id="loading_feed"><i class="fa fa-spinner fa-spin"></i></div>
-			<div id="searchbar"><p id="icon">&#xf002;</p><input id="searchval" name="searchval" autocomplete="on"></div>
 	</div>
 
 	<!-- sidebar -->
@@ -146,6 +164,7 @@
 			
 			<div id="shownews-active"><img src="style/img/paper.png"></div>
 			<div id="showtwitter"><img src="style/img/pound.png"></div>
+			<div id="showsearch"><img src = "style/img/search.png"></div>
 			<div id="sidebar-hide"><img src="style/img/hideside.png"></div>
 			<div id="sidebar-show"><img src="style/img/showside.png"></div>
 			
@@ -166,6 +185,17 @@
 					</ul>
 				</div>
 			</section>
+			
+			<!-- search -->
+			<section class="searchWrapper">	
+				<div class="searchFeed">
+					<div id="searchbar"><input id="searchval" name="searchval" value="Search" autocomplete="on"></div>
+					<ul id="searchList">
+
+					</ul>
+				</div>
+			</section>			
+
 		</div>
 	</div>
 
