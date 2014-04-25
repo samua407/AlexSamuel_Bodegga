@@ -1037,17 +1037,15 @@ app.social = (function(){
 	
 	var listeners = function(){
 		app.social.twitter.init();
-		//app.events.subscribe('social:copy', app.social.copy.init);
 		app.social.copy.init();	
 		app.social.mail.init();
+		app.events.subscribe('social:instapaper', app.social.ip.init);
 	};
 	
 	return {
 		init: init
 	}
 })();
-
-//--twitter 
 app.social.twitter = (function(){
 	
 	var init = function(){
@@ -1117,7 +1115,6 @@ app.social.twitter = (function(){
 	
 	
 })();
-
 app.social.copy = (function(){
 	
 	var init = function(){
@@ -1141,12 +1138,10 @@ app.social.copy = (function(){
 	}
 	
 })();
-
 app.social.mail = (function(){
 	
 	var init = function(){
 		app.events.subscribe('social:mail', send);
-		
 	};
 	
 	var send = function(){
@@ -1174,14 +1169,201 @@ app.social.mail = (function(){
 		
 	};
 	
-	
 	return {
 		init : init
 	};
 	
 	
 })();
+app.social.ip = (function(){
+	
+	var ip_u,
+		ip_p,
+		ip_h,	
+		ip_url,
+		ip_t;
+		
+	var listeners = function(){
+		
+		$('#ip_login_close').click(function(){
+			$('.ip_login').fadeOut();
+			app.events.publish('blur:hide', 'Instapaper Log-In Close');	
+		});
 
+		$('#ip_login_submit').click(function(e){
+			e.preventDefault();
+			ip_getnewlogin();
+		});
+		
+	};	
+	
+	//--see if user has hashed password in local storage
+	var ip_loggedincheck = function(){
+		
+		ip_url = $('.tags h2').html();
+		ip_url = $(ip_url).attr('href');
+		ip_t = $('.readerhead h1').text();
+			
+		var login = localStorage.getItem('bdgaiplog');
+		
+		if(login){
+		
+			var x = JSON.parse(login);		
+			ip_u = x.u;
+			ip_h = x.p;	
+			ip_decode();		
+			
+		}else{	
+			app.events.publish('blur:show', 'Instapaper Log-In');
+			$('.ip_login').fadeIn();
+		}
+		
+	};
+	
+	//--decode hashed password
+	var ip_decode = function(){
+		var url = 'http://peaceful-spire-5824.herokuapp.com/gethash/{"hash" : "' + ip_h + '"}'; 
+				
+		$.ajax({
+			url: url
+		}).success(function(data) {
+			ip_p = data;
+			ip_posturl();
+		}).error(function(data){				
+			console.log('error: ', data);
+		});
+	};
+	
+	//--show ip login form
+	var ip_newLogIn = function(){
+		
+		app.events.publish('blur:show', 'Instapaper Log-In');
+		$('.ip_login').fadeIn();
+		localStorage.setItem("bdgaiplog", "");
+		
+	};
+	
+	//--pull log in from form
+	var ip_getnewlogin = function(){
+	
+		ip_u = $('#ip_login_name').val();
+		ip_p = $('#ip_login_pass').val();
+		ip_loginsubmit();
+		
+	};
+		
+	//--verify login info
+	var ip_loginsubmit = function(){
+		
+		var url = 'lib/soc/ip_logincheck.php?u=' + ip_u + '&p=' + ip_p;
+		
+		$.ajax({
+			url: url
+		}).success(function(data) {		
+			ip_encp();
+			ip_posturl();
+			app.events.publish('social:instapaper:loginok', 'Instapaper Credentials Accepted');
+			$('.ip_login').fadeOut();
+			app.events.publish('blur:hide', 'Instapaper Log-In');
+		}).error(function(data){				
+			//ERROR MESSAGE
+			usrmsg(data);
+		});
+
+	};
+	
+	//--password encryption + storage
+	var ip_encp = function(p){
+		
+		var url = 'lib/soc/ip_hash.php?p=' + p;
+		
+		$.ajax({
+				url: url
+			}).success(function(data) {
+				ip_h = encodeURIComponent(data);
+				ip_savelogin_local();
+				ip_savelogin_db();
+				//POST TO DB
+			}).error(function(data){				
+				//ERROR MESSAGE
+				//console.log('error: ', data);
+			});
+		
+	};
+	var ip_savelogin_local = function(){
+		var x = {u:ip_u, p: ip_h};
+		x = JSON.stringify(x);
+		localStorage.setItem("bdgaiplog", x) ;	
+	};
+	var ip_savelogin_db = function(){
+		
+		var url = 'http://peaceful-spire-5824.herokuapp.com/hash/{"original" : "' + ip_p + '", "hash" : "' + ip_h + '"}'; 
+		console.log(url);
+		
+		$.ajax({
+			url: url
+		}).success(function(data) {
+			//console.log('succes: ', data);
+		}).error(function(data){				
+			//console.log('error: ', data);
+		});
+	};
+	
+	//--post url
+	var ip_posturl = function(){
+	
+		var url = 'lib/soc/ip_addurl.php?u=' + ip_u + '&p=' + ip_p + '&url=' + ip_url + '&t=' + ip_t;
+				
+		$.ajax({
+				url: url
+			}).success(function(data){
+				app.events.publish('social:instapaper:success', 'Instapaper Posted Successfully');
+				$('#instapaper').fadeTo('slow', 0.5).fadeTo('slow', 1.0).fadeTo('slow', 0.5).fadeTo('slow', 1.0);
+				ip_p = '';
+			}).error(function(data){				
+				usrmsg(data);
+			});
+			
+	};
+
+	//--user response
+	var usrmsg = function(msg_string){
+		//console.log('alert: ', msg_string);
+		var msg = parseFloat(msg_string);
+		//console.log(typeof(msg));
+		switch(msg){
+			
+		case 200:
+			//alert('Thanks! You\'ve been logged in successfully.')
+			break;
+		case 201:
+			alert('You\'re article has been successfully posted.')
+			break;
+		case 403:
+			alert('Woops! It looks like Instapaper doesn\'t recognize that username or password. Please try again.')
+			ip_newLogIn();
+			break;
+		default:
+			alert('Looks like something went wrong. Try logging in again.')
+			ip_newLogIn();
+			break;		
+		};
+		
+	};
+	
+	var init = function(){
+		
+		listeners();
+		ip_loggedincheck();
+		
+	};
+	
+	return{
+		init: init,
+		check : ip_loggedincheck
+	}	
+	
+})();
 
 //--blur manager
 app.blur = (function(){
@@ -1219,6 +1401,8 @@ app.blur = (function(){
 	var init = function(){
 		
 		app.events.subscribe('location:selected', hide);
+		app.events.subscribe('blur:show', show);
+		app.events.subscribe('blur:hide', hide);
 	};
 	
 	return {

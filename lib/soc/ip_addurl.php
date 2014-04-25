@@ -1,7 +1,7 @@
 <?php
 
 require 'php-sdk/src/temboo.php';
-require 'ip_check.php';
+
 
 $session = new Temboo_Session('aesam', 'bodegga', '958c74b7-2e27-4c66-9');
 
@@ -11,7 +11,7 @@ $addURL = new Instapaper_AddURL($session);
 $addURLInputs = $addURL->newInputs();
 
 // Set inputs
-$addURLInputs->setUsername("$_GET[u]")->setPassword($deCpass)->setURL("$_GET[url]")->setTitle("$_GET[t]");
+$addURLInputs->setUsername("$_GET[u]")->setPassword("$_GET[p]")->setURL("$_GET[url]")->setTitle("$_GET[t]");
 
 /* echo $addURLInputs; */
 
