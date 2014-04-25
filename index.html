@@ -61,7 +61,7 @@
 			<% }); %>
 		</div>
 		<div class="readerimg">
-			<img src = "<%= thisArticle.img %>" class="img_thumb">
+			<div class="img_thumb"><img src = "<%= thisArticle.img %>"></div>
 		</div>
 		<div class="readerbody">
 			<% _.each(thisArticle.body, function(paragraph){   %>
@@ -140,19 +140,19 @@
 					<p id="inLabel"> in </p>
 					
 					<select id="locationType">
-						<option id="here">right here</option>
-						<option id="nabe" selected>this neighborhood</option>
-						<option id="boro">this borough</option>
+						<option id="here">Right Here</option>
+						<option id="nabe" selected>This Neighborhood</option>
+						<option id="boro">This Borough</option>
 						<option id="city" >New York City</option>
 					</select>
 					
 					<p id="fromTimeLabel">from the last </p>
 					
 					<select id="timeType">
-						<option id="1">day</option>
-						<option id="3" >three days</option>
-						<option id="7" >week</option>
-						<option id="30" selected>month</option>
+						<option id="1">Day</option>
+						<option id="3" >Three Days</option>
+						<option id="7" >Week</option>
+						<option id="30" selected>Month</option>
 					</select>
 				</form>
 			<div id="loading_feed"><i class="fa fa-spinner fa-spin"></i></div>
@@ -163,10 +163,10 @@
 		<div class ="readersidebar">
 			
 			<div id="shownews-active"><img src="style/img/paper.png"></div>
-			<div id="showtwitter"><img src="style/img/pound.png"></div>
+			<div id="showtwitter"><img src="style/img/bubble.png"></div>
 			<div id="showsearch"><img src = "style/img/search.png"></div>
-			<div id="sidebar-hide"><img src="style/img/hideside.png"></div>
-			<div id="sidebar-show"><img src="style/img/showside.png"></div>
+			<div id="sidebar-hide"><img src="style/img/hide.png"></div>
+			<div id="sidebar-show"><img src="style/img/show.png"></div>
 			
 			<!-- feed -->
 			<section class="newsWrapper-active">	
@@ -224,5 +224,7 @@
 	   app.init.home();
 	});
 	</script>
+	
+	<div id="ruler"></div>
 
 </body>

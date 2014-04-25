@@ -91,7 +91,7 @@ body {
 
 	color:  #fff;
 	font: 20px Oswald;
-	text-decoration: none;
+	text-decoration: capitalize;
 	text-align: center;
 	
 	border:  none;
@@ -170,10 +170,8 @@ body {
 	text-decoration: underline;
 }
 
-.nav select  a{
-	text-align: center;
-	
-	
+.nav select:checked {
+	text-transform: capitalize;
 }
 
 .nav select:focus {
@@ -323,31 +321,33 @@ body {
 
 }
 
+.readerkeys p a:hover{
+	background-color: #0392bc;
+}
+
 .readerimg {
+	height: 125px;
 	padding: 0 0 0 10px;
-	margin-top: 10px;
-	margin-bottom: 10px;
 }
 
 .img_thumb p{
 	display:  none;
 }
 
-.img_thumb img{
+.readerimg img{
 	height: 100px;
 	float: left;
 	margin-right: 10px;
-	border: 6px solid #1b273d;
+	border: 10px solid #1b273d;
 	cursor: -webkit-zoom-in;
-	cursor: -moz-zoom-in;
-	
+	cursor: -moz-zoom-in;	
 }
 
 .img_large img{
 	border: 6px solid #1b273d;
+	margin-bottom: 20px;
 	cursor: -webkit-zoom-out;
 	cursor: -moz-zoom-out;
-	
 }
 
 .imgGallery {
@@ -355,7 +355,9 @@ body {
 }
 
 .readerbody {
+	margin: 10px 85px 0px 85px;
 	padding: 0 10px 50px;
+	border-top: solid 2px black;		
 
 }
 

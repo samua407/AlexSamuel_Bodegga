@@ -126,7 +126,7 @@ app.user = (function(){
 				}
 
 			    app.user.nabe = hood[0];
-			    
+						    
 			    var publishLoc = "You are in " + app.user.nabe + ", " + app.user.boro + ".";
 				
 				app.events.publish('location:ready', publishLoc);
@@ -764,7 +764,11 @@ app.content = (function(){
 			app.events.publish('feed:loaded', 'The newsfeed is done loading.');
 			app.events.publish('load:stop', '');
 		}else{
-			body = {"body" : "Well this is embarassing. It seems no one has checked in from " +  $('select#locationType').find('option:selected').val() + " in the last " +$('select#timeType').find('option:selected').val() + ". Try a broader search or browse by topic."}
+			if($('select#newsType').find('option:selected').val() == 'The Most Read'){
+				body = {"body" : "Well this is embarassing. It seems no one has checked in from " +  $('select#locationType').find('option:selected').val() + " in the last " + $('select#timeType').find('option:selected').val().toLowerCase() + ". Try a broader search or browse by topic."}
+			}else{
+				body = {"body" : "Looks like there's no news from the last " +  $('select#timeType').find('option:selected').val().toLowerCase() + " about " +$('select#newsType').find('option:selected').val() + "."};
+			}
 			template = $('.noresults-template').text();
 			renderFeed = _.template(template);		
 			$(renderFeed({msg : body })).appendTo('#articleList');	
@@ -896,6 +900,10 @@ app.content = (function(){
 		feedSrc = app.nav.feed;
 		thisArticle = _.findWhere(feedSrc, {storyURL : url});
 		
+		console.log(thisArticle.img);
+		thisArticle.img = thisArticle.img.replace(/(\W|^)w=130(\W|$)/, 'w=1000');
+		console.log(thisArticle.img);
+		
 		//track article
 		app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
 		app.events.publish('track:updated', 'Obj.articleClick updated');
@@ -909,11 +917,10 @@ app.content = (function(){
 		//feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
 		renderFeed = _.template(template);	
 		
+		
 		$(renderFeed({thisArticle : thisArticle })).appendTo('.reader');
 		app.events.publish('reader:loaded', 'Current article is loaded in the reader.');
 		app.events.publish('reader:show', '');
-		
-		
 		
 	};
 	
@@ -939,11 +946,6 @@ app.content = (function(){
 			app.events.publish('load:start', '');
 			reader_keyword(e);
 		});	
-		
-		$('.img_thumb').click(function(){
-			//ZOOM IN - imgview.zoomin();
-			console.log('image zoom');
-		});
 		
 		$('.readerclose').click(function(){
 			app.events.publish('reader:hide', 'Clicked reader close.');
@@ -999,6 +1001,53 @@ app.content = (function(){
 	}
 		
 	
+})();
+
+//--image zoom manager
+app.imgzoom = (function(){
+	
+	var init = function(){
+
+		app.events.subscribe('reader:loaded', zoomin);	
+		
+	};
+	
+	//zoom in listener + func
+	var zoomin = function(){
+		$('.img_thumb').one('click', function(){
+			var orig_width = $('.img_thumb img').width();
+	 		//update image class + store image width + height 		
+			$('.img_thumb').attr('class', 'img_large');
+			var imgW = $('.img_large img').width();
+			var imgH = $('.img_large img').height();
+			var rdrW = $('.reader').width();
+		
+			//update image width to be 40px less than reader frame width
+			var new_imgW = rdrW - 40;
+			var new_imgH = (new_imgW * imgH) / imgW;
+			$('.img_large img').width(new_imgW);
+			$('.img_large img').height(new_imgH);
+			
+			//init zoomout listener
+			zoomout(orig_width);
+		});
+	};
+	
+	//zoom out listener + func
+	var zoomout = function(width){	
+		$('.img_large').one('click', function(){
+			//update image class, return to orig width
+			$('.img_large').attr('class', 'img_thumb');
+			$('.img_thumb img').width(width);
+			$('.img_thumb img').height(100);
+			zoomin();			
+		});	
+	};
+	
+	return {
+		init : init,
+	};
+
 })();
 
 //--twitterfeed manager
@@ -1614,6 +1663,7 @@ app.init = (function(){
 		app.nav.init();
 		app.search.init();
 		app.content.init();
+		app.imgzoom.init();
 		app.twitterfeed.init();
 		app.social.init();
 		app.loading.init();
