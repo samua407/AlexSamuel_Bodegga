@@ -697,6 +697,21 @@ app.search = (function(){
 		
 	};
 	
+	//--call from keyword
+	var callFromKeyword = function(query){
+		console.log('keyword clicked is', query);	
+		app.events.subscribe('search:content:done', parse);
+		query = '{"keywords":"' + query + '"}'
+		var callback = function(data){
+			app.search.feed = '';
+			app.search.feed = JSON.parse(data);		
+			app.events.publish('search:content:done', 'The results array for the search about ' + $('#searchval').val() + ' is ready.');
+		};
+		
+		app.database.init('find', query, callback);
+			
+	};
+	
 	//--parse results
 	var parse = function(){
 		var	template,
@@ -734,7 +749,8 @@ app.search = (function(){
 	};
 	
 	return {
-		init : init
+		init : init,
+		call : callFromKeyword
 	}
 	
 })();
@@ -791,12 +807,18 @@ app.content = (function(){
 			  	$('#sidebar-show').toggle();
 			  	$('#sidebar-hide').toggle();
 			  	$('.reader').toggleClass('reader-wide');
+			  	if($('.searchWrapper-active')){$('.searchWrapper-active').css('visibility', 'collapse');}
+			  	if($('.twitterWrapper-active')){$('.twitterWrapper-active').css('visibility', 'collapse');}
+			  	if($('.newsWrapper-active')){$('.newsWrapper-active').css('visibility', 'collapse');}	
 			});
 			$('#sidebar-show').click(function(e){
 			  	$('.readersidebar').toggleClass('readersidebar-hide');
 			  	$('#sidebar-show').toggle();
 			  	$('#sidebar-hide').toggle();
 			  	$('.reader').toggleClass('reader-wide');
+			  	if($('.searchWrapper-active')){$('.searchWrapper-active').css('visibility', 'visible');}
+			  	if($('.twitterWrapper-active')){$('.twitterWrapper-active').css('visibility', 'visible');}
+			  	if($('.newsWrapper-active')){$('.newsWrapper-active').css('visibility', 'visible');}
 			});
 			
 			//--show search listener
@@ -900,14 +922,9 @@ app.content = (function(){
 	//reader keyword click
 	var reader_keyword = function(e){
 		var key = e.currentTarget.innerText;
-		var callback = function(data){
-			app.nav.feed = '';
-			app.nav.feed = JSON.parse(data);
-			app.events.publish('nav:content:done', 'The results array for the search about '+ key + ' is ready.');
-		};
-		var query = '{"keywords" : "' + key + '"}'
-		app.database.init('find', query, callback);
-		
+		$('#searchval').val(key);
+		app.search.call(key);
+		$('#showsearch').trigger('click');
 	};
 	
 	//reader listeners
