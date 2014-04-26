@@ -291,8 +291,7 @@ app.database = (function(){
 				app.events.publish('load:stop', '');
 				//data = [{"cat" : "No Results", "storyURL" : "#", "hed" : "Sorry, no articles match your query."}];
 				data = [];
-				data = JSON.stringify(data);
-				
+				data = JSON.stringify(data);	
 			}
 			response = data;
 			callback(data);
@@ -1178,7 +1177,7 @@ app.search = (function(){
 	var call = function(term){
 	
 		var query = cleanterm(term);
-		query = '{"keywords":"' + query + '"}'
+		query = '{"search":"' + query + '"}'
 		
 		var callback = function(data){
 			app.search.feed = '';
@@ -1186,15 +1185,13 @@ app.search = (function(){
 			app.events.publish('search:content:done', 'Search array is ready.');
 		};
 		app.database.init('find', query, callback);
-		
 	};
 	
 	//--call from keyword
 	var callFromKeyword = function(term){
 
 		var query = cleanterm(term);
-		query = '{"keywords":"' + query + '"}'
-		
+		query = '{"search":"' + query + '"}'
 		
 		app.events.subscribe('search:content:done', parse);
 		
