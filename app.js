@@ -32,13 +32,19 @@ app.track = (function(){
 	var obj = {};
 		obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'city' : '', 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
 		obj.articleClick = {'name': '', 'url': '', 'keys': [], 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};
-		//search: { terms: String, resultKeys: [String] },
+		obj.search = { 'terms': []};
 		//dropDown: { term: String, resultKeys: [String] },
 	
 	var submit = function(){
 		var query = JSON.stringify(obj);
 		//app.database.init('track', query);
+		
 		console.log('TRACKING COMMENTED OUT');
+		
+		obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'city' : '', 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
+		obj.articleClick = {'name': '', 'url': '', 'keys': [], 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};
+		obj.search = { 'terms': []};
+		
 	};
 	
 	var subscribe = function(){
@@ -791,7 +797,7 @@ app.content = (function(){
 				reader_clear();
 				reader_render(url);
 			});	
-						
+			
 			//--toggle sidebar visisiblity listeners
 			$('#sidebar-hide').click(function(e){
 			  	$('.readersidebar').toggleClass('readersidebar-hide');
@@ -928,6 +934,7 @@ app.content = (function(){
 		$('#searchval').val(key);
 		app.search.call(key);
 		$('#showsearch').trigger('click');
+		app.track.obj.search.terms.push(key);
 	};
 	
 	//reader listeners
@@ -977,7 +984,6 @@ app.content = (function(){
 		
 		
 	};
-	
 	
 	//--GENERAL
 	//subscriptions
@@ -1158,6 +1164,9 @@ app.search = (function(){
 				var searchval = $('#searchval').val();
 				call(searchval);
 				app.events.publish('load:start', searchval);
+				app.track.obj.search = { 'terms': searchval};
+				app.events.publish('track:updated', 'Obj.search updated. Term is ' + searchval);
+
 			}
 		});
 
@@ -1256,10 +1265,9 @@ app.search = (function(){
 		if(thisArticle.img.length < 2){thisArticle.img = null;};
 		console.log(thisArticle.img);
 
-
 		//track article
-		//app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
-		//app.events.publish('track:updated', 'Obj.articleClick updated');
+		app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
+		app.events.publish('track:updated', 'Obj.articleClick updated');
 		
 		if(typeof(thisArticle.body) == 'string'){ thisArticle.body = thisArticle.body.split('*#'); };
 		if(typeof(thisArticle.date) == 'string'){thisArticle.date = thisArticle.date.split('T')[0]; };
@@ -1371,7 +1379,7 @@ app.social.twitter = (function(){
 		var tweet =	$('#writeTweet').val();	
 		var link = "http://54.221.155.222/_d/lib/soc/oauth/redirect.php?tweet=" + tweet;
 		window.open(link,"_self")
-			
+		
 	};	
 	
 	return {
@@ -1433,7 +1441,6 @@ app.social.mail = (function(){
                              + encodeURIComponent(body);
              
 	    window.location.href = link;
-		
 	};
 	
 	return {
