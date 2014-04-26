@@ -861,7 +861,6 @@ app.content = (function(){
 					var display = document.getElementById("sidebar-show").style.display;
 					if(display == 'block'){$('#sidebar-show').trigger('click');}
 					$('.newsWrapper').attr('class', 'newsWrapper-active').css('visibility', 'visible');	
-
 					showsearch();
 					showtwitter();
 					
@@ -1131,13 +1130,13 @@ app.twitterfeed = (function(){
 			template = $('.twitterfeed-template').text();	
 			renderFeed = _.template(template);		
 			$(renderFeed({tweets : feedSrc })).appendTo('#tweetList');	
-			app.events.publish('tweed:loaded', 'The twitterfeed is done loading.');		
+			app.events.publish('tweet:loaded', 'The twitterfeed is done loading.');		
 		}else{
- 			template = $('.noresults-template').text();
+ 			template = $('.notweets-template').text();
  			feedSrc = {"body" : "No one has tweeted this aritcle yet."};
 			renderFeed = _.template(template);		
 			$(renderFeed({msg : feedSrc })).appendTo('#tweetList');	
-			app.events.publish('tweed:loaded', 'The twitterfeed is done loading.');	
+			app.events.publish('tweet:loaded', 'The twitterfeed is done loading.');	
 		}
 	};
 	

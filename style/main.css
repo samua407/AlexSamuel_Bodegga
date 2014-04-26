@@ -114,7 +114,7 @@ body {
 .logo {
 	background-color: #0392bc;
 	width: 130px;
-	height: 40px;
+	height: 45px;
 	position: absolute;
 	top: 20px;
 }
@@ -123,7 +123,7 @@ body {
 	font: 40px Code;
 	color: #ffffff;
 	padding-left: 15px;
-	margin-top: 0;
+	margin-top: 5;
 /* 	padding-top: 4px; */
 }
 
@@ -793,16 +793,16 @@ input:focus {
 /*--social--*/
 
 .social {
-
-	position:  fixed;
-	width: 100%;
-	z-index:  20;
 	
 }
 
 .ip_login {
+	position: relative;
+	z-index:    5;
+	margin: 200px auto;
+	
+	
 
-	margin: 10% auto;
 	width: 310px;
 	height: 200px;
 	padding: 0 16px 45px;
@@ -843,8 +843,6 @@ input:focus {
 
 #ip_login_submit {
 	margin-top: 15px;
-		
-	
 	background:  transparent;
 	color: #fff;
 	font: small-caps 18px "oswald";

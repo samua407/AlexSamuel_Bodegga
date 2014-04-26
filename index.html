@@ -38,6 +38,12 @@
 			<h4><%= msg.body %></h4>
 		</li>
 	</script>
+
+	<script type="text/template" class="notweets-template">
+		<li class="tweet" id="notweets">
+			<h1><%= msg.body %></h1>
+		</li>
+	</script>
 	
 	<script type="text/template" class="reader-template">
 		<div id="top"></div>
@@ -76,7 +82,7 @@
 		<div class="url"></div>
 	</script>
 	
-	
+	<!--landing-->
 	<div class="landing">
 		<div id="nabeload">
 			Welcome. Hold on a sec while we figure out where you are.
@@ -90,9 +96,13 @@
 			<option value="#"> </option>
 		</select>
 	</div>
-	<div class="social">
-		<div class="ip_login">
-			<div id="ip_login_close">x</div>
+	
+	<!--blur-->
+	<div id="blur"></div>
+		
+	<!--instapaper log-in-->
+	<div class="ip_login">
+		<div id="ip_login_close">x</div>
 			<p>Please log-in to Instapaper to save this article.</p>
 			<form class="ip_login_form">
 			  <label for="ip_login_name">Username:</label>
@@ -103,8 +113,6 @@
 			</form>
 		</div>
 	</div>
-	<div id="blur"></div>
-		
 	
 	<!-- header -->
 	<div class="logo">
