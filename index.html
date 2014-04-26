@@ -40,29 +40,32 @@
 	</script>
 	
 	<script type="text/template" class="reader-template">
-		<div class="readerclose">x</div>
+		<div id="top"></div>
 		<div class="readerhead">
 			<h1><%= thisArticle.hed %></h1><br>
-			<div class="tags">
-				<h2><a href="<%= thisArticle.storyURL %>" target="_blank">View On Reuters</a></h2>
-				<h3><a href=""><%= thisArticle.date %></a></h3>
-				<div class="social-icons">
-					<img src="style/img/twitter.png" id="twitter" title="Tweet this article" alt="Tweet this article">
-					<img src="style/img/instapaper.png" id="instapaper" title="Save to Instapaper" alt="Save to Instapaper">
-					<img src="style/img/mail.png" id="mail" title="E-mail this article" alt="E-mail this article">
-					<img src="style/img/copy.png" id="copy" title="Copy url" alt="Copy url">
-				</div>
-				<br>
-			</div>
 		</div>
+		<div class="tags">
+			<h2><a href="<%= thisArticle.storyURL %>" target="_blank">View On Reuters</a></h2>
+			<h3><a href=""><%= thisArticle.date %></a></h3>
+			<br>
+		</div>		
 		<div class="readerkeys">
 			<% _.each(thisArticle.keywords, function(key){   %>
 				<p><a href><%= key %></a></p>
 			<% }); %>
 		</div>
-		<div class="readerimg">
-			<div class="img_thumb"><img src = "<%= thisArticle.img %>"></div>
-		</div>
+		<% if (thisArticle.img != null) { %>
+			<div class="readerimg">
+					<div class="img_thumb"><img src = "<%= thisArticle.img %>"></div>
+			</div>
+		<% } %>
+		<ul class="social-icons">
+					<li class="readerclose"><img src="style/img/close.png"></li>
+					<li><img src="style/img/twitter.png" id="twitter" title="Tweet this article" alt="Tweet this article"></li>
+					<li><img src="style/img/instapaper.png" id="instapaper" title="Save to Instapaper" alt="Save to Instapaper"></li>
+					<li><img src="style/img/mail.png" id="mail" title="E-mail this article" alt="E-mail this article"></li>
+					<li><img src="style/img/copy.png" id="copy" title="Copy url" alt="Copy url"></li>
+				</ul>
 		<div class="readerbody">
 			<% _.each(thisArticle.body, function(paragraph){   %>
 				<p>

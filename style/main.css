@@ -29,7 +29,11 @@
 	letter-spacing: 1.5px;
 }
 
-
+#top {
+	position: absolute;
+	top: 0px;
+	visibility: hidden;
+}
 /*--body--*/
 
 body {
@@ -232,15 +236,6 @@ body {
 	display: none;
 }
 
-.readerclose {
-	float: right;
-	padding: 15px 15px 0 0;
-	font: 15px Code;
-	color:  #e2e0df;
-	cursor: pointer;
-	
-}
-
 .readerhead h1 {
 	width: 90%;
 	padding: 10px 0 0 10px;
@@ -253,13 +248,14 @@ body {
 .tags {
 	margin-left: 10px;
 	margin-bottom: -11px;
+	width: 200px;
 }
 
-.readerhead h2{
+.tags h2{
 	margin-top:  -50px;
 }
 
-.readerhead h2 a{
+.tags h2 a{
 	background-color: #0392bc;
 	padding:  3px;
 	float:  left;
@@ -271,10 +267,11 @@ body {
 	
 }
 
-.readerhead h3 a{
+.tags h3 a{
 	background-color: #0392bc;
 	padding:  3px;
 	margin-left: 5px;
+	margin-right: 5px;
 	float:  left;
 	
 	font:  15px Oswald;
@@ -286,24 +283,34 @@ body {
 }
 
 .social-icons {
-	float:  left;
-	margin-left: 10px;
-	margin-top: 5px;
+	list-style-type: none;
+	position: fixed;
+	top: 120px;
+	right: 11px;
+	width: 10px;
+	
 }
 
 .social-icons img {
-	height:  20px;
-	margin-right: 5px;
+	float: right;
+	width:  21px;
+	margin: 3px 5px 0px 0px;
 	cursor: pointer;
 }
+
+.social-icons img:hover{
+	background-color: #0392bc;
+}
+
 
 .readerkeys {
 	width: 100%;
 	height: auto;
-	display: inline-block;
+	display: block;
 	cursor: pointer;
 	margin-left: 10px;
 	padding-bottom: 15px;
+	
 }
 
 .readerkeys p a{
@@ -312,7 +319,8 @@ body {
 	
 	float:  left;
 	margin-right: 5px;
-	margin-top: 5px;
+	margin-top: -22px;
+	margin-bottom: 30px;
 	
 	font:  15px Oswald;
 	color: #ffffff;
@@ -337,7 +345,8 @@ body {
 .readerimg img{
 	height: 100px;
 	float: left;
-	margin-right: 10px;
+	clear: left;
+	margin-top: -10px;
 	border: 10px solid #1b273d;
 	cursor: -webkit-zoom-in;
 	cursor: -moz-zoom-in;	
@@ -355,10 +364,9 @@ body {
 }
 
 .readerbody {
-	margin: 10px 85px 0px 85px;
+	margin: 60px 85px 0px 85px;
 	padding: 0 10px 50px;
 	border-top: solid 2px black;		
-
 }
 
 .readerbody p {
@@ -634,7 +642,6 @@ body {
 }
 
 .twitterFeed {
-	width: 85%;
 	height: 98%;
 	float: right;
 	margin: -114px 0px 0px 38px;
@@ -699,10 +706,8 @@ body {
 }
 
 .searchFeed {
-	width: 85%;
 	height: 98%;
-	float: right;
-	margin: -114px 0px 0px 38px;
+	margin: 0px 0px 0px 38px;
 	overflow-y: scroll;
 	overflow-x: hidden;
 	-webkit-overflow-scrolling: touch;
@@ -787,7 +792,7 @@ input:focus {
 
 /*--social--*/
 
-.social{
+.social {
 
 	position:  fixed;
 	width: 100%;

@@ -614,8 +614,9 @@ app.nav = (function(){
 	};
 	
 	//--get story content from articleURLs
-	var getArticleContent = function(){
-				
+	var getArticleContent = function(link){
+		
+
 		var urlList = [];
 		var num_results = articleURLs.length;
 		var num_pushed = 0;
@@ -625,7 +626,6 @@ app.nav = (function(){
 			app.events.publish('nav:content:done', 'The Most Read Article array is ready.')
 		};
 
-		
 		articleURLs.forEach(function(el, arr, index){
 			
 			if(el.length > 2){
@@ -792,7 +792,7 @@ app.content = (function(){
 				reader_clear();
 				reader_render(url);
 			});	
-			
+						
 			//--toggle sidebar visisiblity listeners
 			$('#sidebar-hide').click(function(e){
 			  	$('.readersidebar').toggleClass('readersidebar-hide');
@@ -874,7 +874,6 @@ app.content = (function(){
 		};
 	};
 	
-	
 	//--READER
 	//toggle reader visibility
 	var reader_close = function(){
@@ -890,6 +889,12 @@ app.content = (function(){
 		$('.reader').empty();
 	};
 	
+	//reset position to top
+	var back_to_top = function(){
+   		var pos = $('#top').position();
+	    $('.reader').animate({ scrollTop: pos.top });
+	};
+
 	//render current story
 	var reader_render = function(url){
 		var template,
@@ -898,25 +903,20 @@ app.content = (function(){
 			thisArticle;
 		
 		feedSrc = app.nav.feed;
-		thisArticle = _.findWhere(feedSrc, {storyURL : url});
 		
-		console.log(thisArticle.img);
+		thisArticle = _.findWhere(feedSrc, {storyURL : url});
 		thisArticle.img = thisArticle.img.replace(/(\W|^)w=130(\W|$)/, 'w=1000');
-		console.log(thisArticle.img);
 		
 		//track article
 		app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
 		app.events.publish('track:updated', 'Obj.articleClick updated');
 		
-		
-		thisArticle.body = thisArticle.body.split('*#');
-		thisArticle.date = thisArticle.date.split('T')[0];
-		thisArticle.keywords = thisArticle.keywords[0].split(',');
-		
+		if(typeof(thisArticle.body) == 'string'){ thisArticle.body = thisArticle.body.split('*#'); };
+		if(typeof(thisArticle.date) == 'string'){thisArticle.date = thisArticle.date.split('T')[0]; };
+		if(thisArticle.keywords.length < 2){thisArticle.keywords = thisArticle.keywords[0].split(','); };
+						
 		template = $('.reader-template').text();
-		//feedSrc = app.nav.feed.slice(1, 4); //CUT WHEN BACK END IS WORKING
 		renderFeed = _.template(template);	
-		
 		
 		$(renderFeed({thisArticle : thisArticle })).appendTo('.reader');
 		app.events.publish('reader:loaded', 'Current article is loaded in the reader.');
@@ -987,8 +987,10 @@ app.content = (function(){
 		app.events.subscribe('nav:content:done', build);
 		app.events.subscribe('feed:loaded', feed_listen);
 		app.events.subscribe('reader:loaded', reader_listen);
+		app.events.subscribe('reader:loaded', back_to_top);
 		app.events.subscribe('reader:hide', reader_close);
 		app.events.subscribe('reader:show', reader_open);
+
 	};
 
 	var init = function(){
@@ -997,7 +999,8 @@ app.content = (function(){
 	
 	return {
 		
-		init : init
+		init : init,
+		clear : reader_clear
 	}
 		
 	
@@ -1156,7 +1159,7 @@ app.search = (function(){
 			if (e.which == 13){
 				var searchval = $('#searchval').val();
 				call(searchval);
-				app.events.publish('load:start', 'Started search for', searchval);
+				app.events.publish('load:start', searchval);
 			}
 		});
 
@@ -1220,6 +1223,15 @@ app.search = (function(){
 			$(renderFeed({articles : feedSrc })).appendTo('#searchList');	
 			app.events.publish('feed:loaded', 'The search results are done loading.');
 			app.events.publish('load:stop', '');
+			
+			//--search click listener
+			$('#searchList li').click(function(e){
+				e.preventDefault();
+				var url = e.currentTarget.childNodes[1].children[0].href;
+				app.events.publish('search:articleclick', url);
+				
+			});
+			
 		}else{
 			template = $('.noresults-template').text();
 			var msg = "Sorry. Your search for " + $('#searchval').val() + " came up empty."
@@ -1230,13 +1242,51 @@ app.search = (function(){
 			app.events.publish('load:stop', '');
 		}
 	};
+	
+	//--load article
+	var loadArticle = function(url){
+				
+		app.content.clear();
 		
+		var template,
+			feedSrc,
+			renderFeed,
+			thisArticle;
+		
+		feedSrc = app.search.feed;
+		
+		thisArticle = _.findWhere(feedSrc, {storyURL : url});
+		thisArticle.img = thisArticle.img.replace(/(\W|^)w=130(\W|$)/, 'w=1000');
+		if(thisArticle.img.length < 2){thisArticle.img = null;};
+		console.log(thisArticle.img);
+
+
+		//track article
+		//app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
+		//app.events.publish('track:updated', 'Obj.articleClick updated');
+		
+		if(typeof(thisArticle.body) == 'string'){ thisArticle.body = thisArticle.body.split('*#'); };
+		if(typeof(thisArticle.date) == 'string'){thisArticle.date = thisArticle.date.split('T')[0]; };
+		if(thisArticle.keywords.length < 2){thisArticle.keywords = thisArticle.keywords[0].split(','); };
+						
+		template = $('.reader-template').text();
+		renderFeed = _.template(template);	
+		
+		$(renderFeed({thisArticle : thisArticle })).appendTo('.reader');
+		app.events.publish('reader:loaded', 'Current article is loaded in the reader.');
+		app.events.publish('reader:show', '');	
+	};
+	
 	//--init listeners
 	var init = function(){
 		
 		$('#searchbar').click(function(){
 			listen();
 			$('#searchval').val('');
+		});
+		
+		app.events.subscribe('search:articleclick', function(url){
+			loadArticle(url);
 		});
 
 		
@@ -1675,6 +1725,4 @@ app.init = (function(){
 	};
 	
 })();
-
-
 
