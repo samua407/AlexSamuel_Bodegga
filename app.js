@@ -37,18 +37,20 @@ app.track = (function(){
 	
 	var submit = function(){
 		var query = JSON.stringify(obj);
-		//app.database.init('track', query);
+
+		console.log('tracking');
+		app.database.init('track', query);
+		//console.log('TRACKING COMMENTED OUT');
 		
-		console.log('TRACKING COMMENTED OUT');
-		
-		obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'city' : '', 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
+		//clear submitted info
+		//obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'city' : '', 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
 		obj.articleClick = {'name': '', 'url': '', 'keys': [], 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};
 		obj.search = { 'terms': []};
 		
 	};
 	
 	var subscribe = function(){
-		app.events.subscribe('track', submit);
+		app.events.subscribe('story:track', submit);
 		
 	};
 	
@@ -364,6 +366,7 @@ app.database = (function(){
 	//track in user collection.	
 	var track = function(query, callback, errorcallback){
 		
+		
 		$.ajax({
 			url: baseurl + 'track/' + query,
 		}).success(function(data) {
@@ -586,7 +589,7 @@ app.nav = (function(){
 
 	};
 	
-
+	//--sort articles
 	var sort = function(array){
 		
 		//sort list of heds by frequency
@@ -898,7 +901,7 @@ app.content = (function(){
 
 	//clear current story
 	var reader_clear = function(){	
-		app.events.publish('track', 'Track prev article.');
+		app.events.publish('story:track', 'Track prev article.');
 		$('.reader').empty();
 	};
 	
@@ -921,7 +924,8 @@ app.content = (function(){
 		thisArticle.img = thisArticle.img.replace(/(\W|^)w=130(\W|$)/, 'w=1000');
 		
 		//track article
-		app.track.obj.articleClick = {'name': thisArticle.hed, 'url': thisArticle.storyURL, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
+		var url = thisArticle.storyURL.replace(/\//g, '^').replace(/\?/g, '`');
+		app.track.obj.articleClick = {'name': thisArticle.hed, 'url': url, 'keys': thisArticle.keywords, 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};	
 		app.events.publish('track:updated', 'Obj.articleClick updated');
 		
 		if(typeof(thisArticle.body) == 'string'){ thisArticle.body = thisArticle.body.split('*#'); };
