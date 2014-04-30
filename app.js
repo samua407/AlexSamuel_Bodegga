@@ -764,7 +764,6 @@ app.content = (function(){
 		
 		//--load first article when loaded
 		app.events.subscribe('feed:loaded', function(){
-			console.log('loaded!');
 			var top_story = $('#articleList li');
 			top_story = top_story[0];
 			$(top_story).trigger('click');
@@ -993,6 +992,19 @@ app.content = (function(){
 		});
 		
 		//alerts
+		//twitter alert TK
+		
+		app.events.subscribe('social:instapaper:loginok', function(){
+			toastr.success('You\'ve succesfully been logged into Instapaper.')
+		});
+		
+		app.events.subscribe('social:instapaper:success', function(){
+			toastr.success('Story successfully saved to Instapaper.')
+		});
+		
+		app.events.subscribe('social:copy:success', function(){
+			toastr.success('Link copied.')
+		});
 		
 		
 	};
@@ -1359,7 +1371,6 @@ app.social.twitter = (function(){
 	};
 	
 	var init_popup = function(){	
-		console.log('hello');
 		listeners();
 		charCount();
 	};	
@@ -1419,6 +1430,7 @@ app.social.copy = (function(){
 		
 		client.on( 'dataRequested', function (client, args) {
 			$('#copy').fadeTo('slow', 0.5).fadeTo('slow', 1.0).fadeTo('slow', 0.5).fadeTo('slow', 1.0);
+			app.events.publish('social:copy:success', 'Link successfully copied.');
 			client.setText( url );
 		});
 			

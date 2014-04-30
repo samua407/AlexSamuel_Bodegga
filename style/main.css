@@ -697,6 +697,11 @@ body {
 	text-transform: none;
 }
 
+#notweets {
+	margin-top: 120px;
+}
+
+
 .searchWrapper{
 	display: none;
 }
@@ -860,3 +865,7 @@ input:focus {
 }
 
 
+/*--other--*/
+.toast-success {
+  background-color: #1b273d;
+}
