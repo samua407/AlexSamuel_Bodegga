@@ -762,6 +762,15 @@ app.content = (function(){
 			renderFeed;
 		feedSrc = app.nav.feed;
 		
+		//--load first article when loaded
+		app.events.subscribe('feed:loaded', function(){
+			console.log('loaded!');
+			var top_story = $('#articleList li');
+			top_story = top_story[0];
+			$(top_story).trigger('click');
+			
+		});
+		
 		if(feedSrc.length > 0){
 			template = $('.newsfeed-template').text();
 			renderFeed = _.template(template);		
@@ -786,18 +795,19 @@ app.content = (function(){
 	//feed listeners
 	var feed_listenON = false;
 	var feed_listen = function(){
+
+		//--article click listener
+		$('#articleList li').click(function(e){
+			e.preventDefault();
+			var url = e.currentTarget.childNodes[1].children[0].href;
+			reader_clear();
+			reader_render(url);
+		});	
 	
+		
 		if(feed_listenON == false){
 			feed_listenON = true;
-			
-			//--article click listener
-			$('#articleList li').click(function(e){
-				e.preventDefault();
-				var url = e.currentTarget.childNodes[1].children[0].href;
-				reader_clear();
-				reader_render(url);
-			});	
-			
+						
 			//--toggle sidebar visisiblity listeners
 			$('#sidebar-hide').click(function(e){
 			  	$('.readersidebar').toggleClass('readersidebar-hide');
@@ -820,7 +830,7 @@ app.content = (function(){
 			
 			//--show search listener
 			var showsearch = function(){
-				$('#showsearch').one('click', function(e){
+				$('#showsearch').on('click', function(e){
 					$('#shownews-active').attr('id', 'shownews');
 					$('#showtwitter-active').attr('id', 'showtwitter');
 					$(this).attr('id', 'showsearch-active');
@@ -838,7 +848,7 @@ app.content = (function(){
 			
 			//--show twitter listener
 			var showtwitter = function(){
-				$('#showtwitter').one('click', function(e){
+				$('#showtwitter').on('click', function(e){
 					$('#shownews-active').attr('id', 'shownews');
 					$(this).attr('id', 'showtwitter-active');
 					$('#showsearch-active').attr('id', 'showsearch');
@@ -856,7 +866,7 @@ app.content = (function(){
 			
 			//--show news listener
 			var shownews = function(){			
-				$('#shownews').one('click', function(e){
+				$('#shownews').on('click', function(e){
 					$(this).attr('id', 'shownews-active');
 					$('#showtwitter-active').attr('id', 'showtwitter');
 					$('#showsearch-active').attr('id', 'showsearch');
@@ -981,6 +991,8 @@ app.content = (function(){
 			app.events.publish('social:copy', 'Clicked Copy URL.');
 	
 		});
+		
+		//alerts
 		
 		
 	};
@@ -1310,11 +1322,16 @@ app.social = (function(){
 		app.events.subscribe('reader:loaded', listeners);
 	};
 	
+	var alreadyListening = false;
+	
 	var listeners = function(){
-		app.social.twitter.init();
-		app.social.copy.init();	
-		app.social.mail.init();
-		app.events.subscribe('social:instapaper', app.social.ip.init);
+		if(alreadyListening == false){
+			app.social.twitter.init();
+			app.social.copy.init();	
+			app.social.mail.init();
+			app.events.subscribe('social:instapaper', app.social.ip.init);
+			alreadyListening = true;
+		};
 	};
 	
 	return {
