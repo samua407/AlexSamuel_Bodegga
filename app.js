@@ -42,8 +42,7 @@ app.track = (function(){
 		app.database.init('track', query);
 		//console.log('TRACKING COMMENTED OUT');
 		
-		//clear submitted info
-		//obj.user = {'finger': '', 'geoLat': 0, 'geoLon': 0, 'city' : '', 'geoNabe': '', 'geoBoro': '', 'geoName': '', 'geoType': ''};
+		//clear article info
 		obj.articleClick = {'name': '', 'url': '', 'keys': [], 'tweet': false, 'instapaper': false, 'email': false, 'copy': false, 'ct': false};
 		obj.search = { 'terms': []};
 		
@@ -763,7 +762,7 @@ app.content = (function(){
 		var	template,
 			feedSrc,
 			renderFeed;
-		feedSrc = app.nav.feed;
+			feedSrc = app.nav.feed;
 		
 		//--load first article when loaded
 		app.events.subscribe('feed:loaded', function(){
@@ -921,7 +920,13 @@ app.content = (function(){
 		feedSrc = app.nav.feed;
 		
 		thisArticle = _.findWhere(feedSrc, {storyURL : url});
-		thisArticle.img = thisArticle.img.replace(/(\W|^)w=130(\W|$)/, 'w=1000');
+		if(thisArticle.img){
+			if(thisArticle.img.length > 2){
+				thisArticle.img = thisArticle.img.replace(/(\W|^)w=130(\W|$)/, 'w=1000');
+			}
+		}else{
+			thisArticle.img = null;
+		};
 		
 		//track article
 		var url = thisArticle.storyURL.replace(/\//g, '^').replace(/\?/g, '`');
@@ -929,8 +934,17 @@ app.content = (function(){
 		app.events.publish('track:updated', 'Obj.articleClick updated');
 		
 		if(typeof(thisArticle.body) == 'string'){ thisArticle.body = thisArticle.body.split('*#'); };
-		if(typeof(thisArticle.date) == 'string'){thisArticle.date = thisArticle.date.split('T')[0]; };
-		if(thisArticle.keywords.length < 2){thisArticle.keywords = thisArticle.keywords[0].split(','); };
+		if(typeof(thisArticle.date) == 'string'){thisArticle.date = thisArticle.date.split('T')[0]; };		
+		if(thisArticle.keywords && 	thisArticle.keywords.length < 2){
+			if(thisArticle.keywords[0] != undefined){
+				thisArticle.keywords = thisArticle.keywords[0].split(',');
+			
+				if(thisArticle.keywords[0].length < 2) {
+					thisArticle.keywords = [];
+				};
+				
+			};
+		};
 						
 		template = $('.reader-template').text();
 		renderFeed = _.template(template);	
@@ -994,22 +1008,7 @@ app.content = (function(){
 			app.events.publish('social:copy', 'Clicked Copy URL.');
 	
 		});
-		
-		//alerts
-		//twitter alert TK
-		
-		app.events.subscribe('social:instapaper:loginok', function(){
-			toastr.success('You\'ve succesfully been logged into Instapaper.')
-		});
-		
-		app.events.subscribe('social:instapaper:success', function(){
-			toastr.success('Story successfully saved to Instapaper.')
-		});
-		
-		app.events.subscribe('social:copy:success', function(){
-			toastr.success('Link copied.')
-		});
-		
+
 		
 	};
 	
@@ -1091,7 +1090,6 @@ app.twitterfeed = (function(){
 	var init = function(){
 		empty();
 		app.events.subscribe('reader:loaded', call);	
-		
 	};
 	
 	var empty = function(){
@@ -1335,19 +1333,14 @@ app.search = (function(){
 app.social = (function(){
 	
 	var init = function(){
-		app.events.subscribe('reader:loaded', listeners);
+		listeners();
 	};
 	
-	var alreadyListening = false;
-	
-	var listeners = function(){
-		if(alreadyListening == false){
+	var listeners = function(){	
 			app.social.twitter.init();
 			app.social.copy.init();	
 			app.social.mail.init();
 			app.events.subscribe('social:instapaper', app.social.ip.init);
-			alreadyListening = true;
-		};
 	};
 	
 	return {
@@ -1371,6 +1364,7 @@ app.social.twitter = (function(){
 		url = $(url).attr('href');
 		hed = $('.readerhead h1').text();
 		link = 'lib/soc/oauth/tweetPopup.php?l=' + url + "&t=" + hed;
+		console.log('///', link);
 		window.open(link,"_blank","toolbar=no, scrollbars=no, resizable=no, top=300, left=500, width=400, height=150");			
 	};
 	
@@ -1409,7 +1403,7 @@ app.social.twitter = (function(){
 	var post = function(){
 	
 		var tweet =	$('#writeTweet').val();	
-		var link = "http://54.221.155.222/_d/lib/soc/oauth/redirect.php?tweet=" + tweet;
+		var link = "http://54.198.54.234/lib/soc/oauth/redirect.php?tweet=" + tweet;
 		window.open(link,"_self")
 		
 	};	
@@ -1491,7 +1485,7 @@ app.social.ip = (function(){
 		ip_t;
 		
 	var listeners = function(){
-		
+
 		$('#ip_login_close').click(function(){
 			$('.ip_login').fadeOut();
 			app.events.publish('blur:hide', 'Instapaper Log-In Close');	
@@ -1506,7 +1500,7 @@ app.social.ip = (function(){
 	
 	//--see if user has hashed password in local storage
 	var ip_loggedincheck = function(){
-		
+
 		ip_url = $('.tags h2').html();
 		ip_url = $(ip_url).attr('href');
 		ip_t = $('.readerhead h1').text();
@@ -1529,6 +1523,7 @@ app.social.ip = (function(){
 	
 	//--decode hashed password
 	var ip_decode = function(){
+
 		var url = 'http://peaceful-spire-5824.herokuapp.com/gethash/{"hash" : "' + ip_h + '"}'; 
 				
 		$.ajax({
@@ -1543,7 +1538,7 @@ app.social.ip = (function(){
 	
 	//--show ip login form
 	var ip_newLogIn = function(){
-		
+
 		app.events.publish('blur:show', 'Instapaper Log-In');
 		$('.ip_login').fadeIn();
 		localStorage.setItem("bdgaiplog", "");
@@ -1552,7 +1547,7 @@ app.social.ip = (function(){
 	
 	//--pull log in from form
 	var ip_getnewlogin = function(){
-	
+
 		ip_u = $('#ip_login_name').val();
 		ip_p = $('#ip_login_pass').val();
 		ip_loginsubmit();
@@ -1561,7 +1556,7 @@ app.social.ip = (function(){
 		
 	//--verify login info
 	var ip_loginsubmit = function(){
-		
+
 		var url = 'lib/soc/ip_logincheck.php?u=' + ip_u + '&p=' + ip_p;
 		
 		$.ajax({
@@ -1581,7 +1576,7 @@ app.social.ip = (function(){
 	
 	//--password encryption + storage
 	var ip_encp = function(p){
-		
+
 		var url = 'lib/soc/ip_hash.php?p=' + p;
 		
 		$.ajax({
@@ -1598,13 +1593,14 @@ app.social.ip = (function(){
 		
 	};
 	var ip_savelogin_local = function(){
-		var x = {u:ip_u, p: ip_h};
-		x = JSON.stringify(x);
-		localStorage.setItem("bdgaiplog", x) ;	
+
+		//var x = {u:ip_u, p: ip_h};
+		//x = JSON.stringify(x);
+		//localStorage.setItem("bdgaiplog", x) ;	
 	};
 	var ip_savelogin_db = function(){
-		
-		var url = 'http://peaceful-spire-5824.herokuapp.com/hash/{"original" : "' + ip_p + '", "hash" : "' + ip_h + '"}'; 
+
+/*		var url = 'http://peaceful-spire-5824.herokuapp.com/hash/{"original" : "' + ip_p + '", "hash" : "' + ip_h + '"}'; 
 		console.log(url);
 		
 		$.ajax({
@@ -1614,11 +1610,12 @@ app.social.ip = (function(){
 		}).error(function(data){				
 			//console.log('error: ', data);
 		});
+*/
 	};
 	
 	//--post url
 	var ip_posturl = function(){
-	
+
 		var url = 'lib/soc/ip_addurl.php?u=' + ip_u + '&p=' + ip_p + '&url=' + ip_url + '&t=' + ip_t;
 				
 		$.ajax({
@@ -1635,6 +1632,7 @@ app.social.ip = (function(){
 
 	//--user response
 	var usrmsg = function(msg_string){
+
 		//console.log('alert: ', msg_string);
 		var msg = parseFloat(msg_string);
 		//console.log(typeof(msg));
@@ -1659,7 +1657,6 @@ app.social.ip = (function(){
 	};
 	
 	var init = function(){
-		
 		listeners();
 		ip_loggedincheck();
 		
@@ -1738,6 +1735,47 @@ app.loading = (function(){
 	
 		init : init
 	}
+	
+})();
+
+//--toastr alerts
+app.alerts = (function(){
+	
+		app.events.subscribe('social:instapaper:loginok', function(){
+			toastr.success('You\'ve succesfully been logged into Instapaper.')
+		});
+		
+		app.events.subscribe('social:instapaper:success', function(){
+			toastr.success('Story successfully saved to Instapaper.')
+		});
+		
+		app.events.subscribe('social:copy:success', function(){
+			toastr.success('Link copied.')
+		});
+		
+	
+})();
+
+//--show timer
+app.showTimer = (function(){
+
+	var intTime = 3*60; //interval is 3 minutes
+	counter = 0;
+
+	
+	//second counter
+	window.setInterval(function(){
+		counter++;
+		if(counter == intTime){
+			console.log('no one\s been here for a while. time to reload');
+			document.location.reload(true);
+		}
+
+	}, 1*1000);
+
+	$('body').mousemove(function(event){
+		counter = 0;
+	});
 	
 })();
 

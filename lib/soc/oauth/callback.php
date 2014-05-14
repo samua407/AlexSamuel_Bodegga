@@ -41,7 +41,7 @@ if (200 == $connection->http_code) {
   	echo '<head><link rel="stylesheet" href="/_d/style/twpop.css"><script>setTimeout(function(){window.close();}, 2*1000);</script></head><body><div class="postTweet"><h1>Hmm..something went wrong. Please close this window and try again.</h1></div></body>';
   	var_dump($content);
   }else{
-	  echo '<head><link rel="stylesheet" href="/_d/style/twpop.css"><script>setTimeout(function(){window.close();}, 3*1000);</script></head><body><div class="postTweet"><h1>Posted!</h1></div></body>'; 
+	  echo '<head><link rel="stylesheet" href="/style/twpop.css"><script>setTimeout(function(){window.close();}, 3*1000);</script></head><body><div class="postTweet"><h1>Posted!</h1></div></body>'; 
   };
  
 
