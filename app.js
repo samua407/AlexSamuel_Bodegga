@@ -1800,3 +1800,9 @@ app.init = (function(){
 	
 })();
 
+	
+//fix for old school computer		
+app.events.subscribe('feed:loaded', function(){
+	$('.newsfeed').show();
+});	
+
